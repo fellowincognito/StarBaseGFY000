@@ -136,7 +136,7 @@ public class WorldOrthoCamera : MonoBehaviour
                 m_startClickPos = m_startDragPos;
                 m_endClickPos = m_currentMousePos;
 
-                //GroundManager.Singleton.SetTiles(m_startClickPos, m_endClickPos, selectType);
+                GroundManager.Singleton.SetTiles(m_startClickPos, m_endClickPos, selectType);
             }
         }
 
@@ -144,7 +144,7 @@ public class WorldOrthoCamera : MonoBehaviour
         {
             m_currentMousePos = WorldPointFromMouse();
 
-            //GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
+            GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
         }
     }
 

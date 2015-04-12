@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
 
     #region Vars
     PlayerCharacter m_currentPlayerChar;
+
+    public Vec2Int playableSize = new Vec2Int(16, 16);
     #endregion
 
     #region Gets/Sets
@@ -40,9 +42,26 @@ public class GameManager : MonoBehaviour
     #endregion
 
 	// Use this for initialization
-	void Start () {
-	
+	void Start () 
+    {
+        Init();
 	}
+
+    void Init()
+    {
+        CacheManager.Singleton.Init();
+        GroundManager.Singleton.Init(playableSize);
+
+        PickRandomStartPointInWorld();
+    }
+
+    //Pick a random start point in world near the center of the playable area
+    void PickRandomStartPointInWorld()
+    {
+        Vec2Int randSpot = new Vec2Int((int)(GroundManager.Singleton.GroundSize.x * 0.5f), (int)(GroundManager.Singleton.GroundSize.y * 0.5f));
+
+        CameraManager.Singleton.SetCameraPosition(new Vector3(randSpot.x, 0f, randSpot.y), false);
+    }
 	
 	// Update is called once per frame
 	void Update () {

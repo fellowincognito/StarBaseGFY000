@@ -29,7 +29,7 @@ public class PrefabAssets : MonoBehaviour
     #endregion
 
     //Game Objects
-
+    public GameObject tileObject;
     
     //Props
     public TileObject prefabGroundTile;
