@@ -51,6 +51,8 @@ public class GameManager : MonoBehaviour
     {
         CacheManager.Singleton.Init();
         GroundManager.Singleton.Init(playableSize);
+        UIManager.Singleton.Init();
+        CameraManager.Singleton.Init();
 
         PickRandomStartPointInWorld();
     }

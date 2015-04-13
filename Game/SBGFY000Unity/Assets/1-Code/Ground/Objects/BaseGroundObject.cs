@@ -18,6 +18,7 @@ public class BaseGroundObject : MonoBehaviour
 
     public float defaultOrientation = 0f;
 
+    [SerializeField]
     protected Vec2Int m_tilePos;
 
     public Vec2Int tilePos

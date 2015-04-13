@@ -136,7 +136,11 @@ public class WorldOrthoCamera : MonoBehaviour
                 m_startClickPos = m_startDragPos;
                 m_endClickPos = m_currentMousePos;
 
-                GroundManager.Singleton.SetTiles(m_startClickPos, m_endClickPos, selectType);
+                //If the selection mode is tiles, then send it to the GroundManager
+                if (CameraManager.Singleton.selectionMode == CameraManager.CameraSelectionMode.Tiles)
+                {
+                    GroundManager.Singleton.SetHighlightTiles(m_startClickPos, m_endClickPos, selectType);
+                }
             }
         }
 
@@ -144,7 +148,11 @@ public class WorldOrthoCamera : MonoBehaviour
         {
             m_currentMousePos = WorldPointFromMouse();
 
-            GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
+            //If the selection mode is tiles, then send it to the GroundManager
+            if (CameraManager.Singleton.selectionMode == CameraManager.CameraSelectionMode.Tiles)
+            {
+                GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
+            }
         }
     }
 

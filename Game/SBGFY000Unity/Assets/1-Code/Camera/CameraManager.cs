@@ -28,9 +28,23 @@ public class CameraManager : MonoBehaviour {
     }
     #endregion
 
+    #region Enums
+    public enum CameraSelectionMode
+    {
+        None,
+        Objects,
+        Tiles,
+        Characters
+    }
+    #endregion
+
     #region Vars
-    public WorldOrthoCamera m_worldCamera;
+    [SerializeField]
+    protected WorldOrthoCamera m_worldCamera;
     Coroutine m_lerpCoroutine;
+
+    CameraSelectionMode m_cameraSelectionMode;
+
     #endregion
 
     #region Gets/Sets
@@ -38,7 +52,21 @@ public class CameraManager : MonoBehaviour {
     {
         get { return m_worldCamera; }
     }
+
+    public CameraSelectionMode selectionMode
+    {
+        get { return m_cameraSelectionMode; }
+        set
+        {
+            m_cameraSelectionMode = value;
+        }
+    }
     #endregion
+
+    public void Init()
+    {
+        m_cameraSelectionMode = CameraSelectionMode.None;
+    }
 
     public void SetCameraPosition(Vector3 newPosition, bool snapImmediate)
     {
