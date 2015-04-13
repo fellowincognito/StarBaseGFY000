@@ -18,4 +18,14 @@ public class HologramObject : MonoBehaviour
     {
         tilePos = new Vec2Int(-1, -1);
     }
+
+    public void SetColor(Color color)
+    {
+        this.gameObject.renderer.material.SetColor("_Color", color);
+    }
+
+    void OnDestroy()
+    {
+        DestroyImmediate(this.gameObject.renderer.material);
+    }
 }

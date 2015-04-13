@@ -18,12 +18,19 @@ public class BaseGroundObject : MonoBehaviour
 
     public float defaultOrientation = 0f;
 
+    public MeshCollider theCollider;
+
     [SerializeField]
     protected Vec2Int m_tilePos;
 
     public Vec2Int tilePos
     {
         get { return m_tilePos; }
+    }
+
+    void Awake()
+    {
+        theCollider = this.gameObject.GetComponent<MeshCollider>();
     }
 
     public void SetTilePos(Vec2Int pos)

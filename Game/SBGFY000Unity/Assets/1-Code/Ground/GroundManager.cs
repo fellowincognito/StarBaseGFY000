@@ -215,6 +215,7 @@ public class GroundManager : MonoBehaviour
     public void ClearSelection()
     {
         m_highLightStartPoint = m_highLightWidthHeight = Vec2Int.Zero;
+        ReturnSelectedHolograms();
         ReturnTempHolograms();
     }
 
@@ -273,9 +274,11 @@ public class GroundManager : MonoBehaviour
                 switch (neighborIndex)
                 {
                     //Straight wall piece
-                    case 152:
+                    case 17:
                     case 98:
                     case 49:
+                    case 132:
+                    case 152:
                     case 196:
                     case 245:
                     case 250:
@@ -447,12 +450,20 @@ public class GroundManager : MonoBehaviour
     {
         for (int i = 0; i < m_tempSelectedTiles.Count; i++)
         {
+            Color tileColor = new Color(0.94f, 0.87f, 0f, 0.9f);
+            int index = ConvertVec2IntToInt(m_tempSelectedTiles[i]);
+            if (m_groundTiles[index] != 0)
+            {
+                tileColor = new Color(1f, 0f, 0f, 0.9f);
+            }
+
             HologramObject holo = CacheManager.Singleton.RequestHighLightTile();
             holo.tilePos.x = m_tempSelectedTiles[i].x;
             holo.tilePos.y = m_tempSelectedTiles[i].y;
 
             holo.gameObject.transform.position = new Vector3(holo.tilePos.x, 0f, holo.tilePos.y);
             holo.gameObject.SetActive(true);
+            holo.SetColor(tileColor);
 
             m_tempSelectHolograms.Add(holo);
         }
@@ -471,12 +482,20 @@ public class GroundManager : MonoBehaviour
     {
         for (int i = 0; i < m_selectedTiles.Count; i++)
         {
+            Color tileColor = new Color(0.94f, 0.87f, 0f, 0.9f);
+            int index = ConvertVec2IntToInt(m_selectedTiles[i]);
+            if (m_groundTiles[index] != 0)
+            {
+                tileColor = new Color(1f, 0f, 0f, 0.9f);
+            }
+
             HologramObject holo = CacheManager.Singleton.RequestHighLightTile();
             holo.tilePos.x = m_selectedTiles[i].x;
             holo.tilePos.y = m_selectedTiles[i].y;
 
             holo.gameObject.transform.position = new Vector3(holo.tilePos.x, 0f, holo.tilePos.y);
             holo.gameObject.SetActive(true);
+            holo.SetColor(tileColor);
 
             m_selectedHolograms.Add(holo);
         }

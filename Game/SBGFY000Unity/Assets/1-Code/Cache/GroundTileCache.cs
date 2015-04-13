@@ -16,7 +16,7 @@ public class GroundTileCache : BaseCache<HologramObject>
     protected override HologramObject CreateNewObject()
     {
         GameObject newGO = (GameObject)GameObject.Instantiate(PrefabAssets.Singleton.tileObject);
-        newGO.renderer.material = PrefabAssets.Singleton.hologramMat;
+        newGO.renderer.material = new Material(PrefabAssets.Singleton.hologramMat);
         newGO.transform.parent = CacheManager.Singleton.gameObject.transform;
         HologramObject holo = newGO.AddComponent<HologramObject>();
         newGO.SetActive(false);
