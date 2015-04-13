@@ -157,6 +157,8 @@ public class UIManager : MonoBehaviour
         //Make sure the UIConfirmationPanel is off until we need it later
         UIConfirmationPanel.SetActive(false);
 
+        GameManager.Singleton.SwitchToBuildMode();
+
         return true;
     }
 
@@ -170,6 +172,8 @@ public class UIManager : MonoBehaviour
         UIBuildPanel.SetActive(false);
         //Make sure the UIConfirmationPanel is off
         UIConfirmationPanel.SetActive(false);
+
+        GameManager.Singleton.SwitchToCharacterMode();
 
         return true;
     }

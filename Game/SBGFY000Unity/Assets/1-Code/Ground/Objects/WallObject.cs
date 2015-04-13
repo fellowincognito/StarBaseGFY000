@@ -25,4 +25,36 @@ public class WallObject : BaseGroundObject
     {
 
     }
+
+    public override void SetMaterial(Material mat)
+    {
+        base.SetMaterial(mat);
+
+        bottomArt.renderer.material = mat;
+        topArt.renderer.material = mat;
+    }
+
+    public override void AssignToPosition(Vec2Int position, float rot, bool asHologram)
+    {
+        base.AssignToPosition(position, rot, asHologram);
+
+        if (asHologram)
+        {
+            topArt.renderer.material = PrefabAssets.Singleton.wallHologramMat;
+            bottomArt.renderer.material = PrefabAssets.Singleton.wallHologramMat;
+            ToggleCollider(false);
+        }
+        else
+        {
+            topArt.renderer.material = PrefabAssets.Singleton.wallMatGray;
+            bottomArt.renderer.material = PrefabAssets.Singleton.wallMatGray;
+            ToggleCollider(true);
+        }
+    }
+
+    public override void BuildObject()
+    {
+        SetMaterial(PrefabAssets.Singleton.wallMatGray);
+    }
+    
 }

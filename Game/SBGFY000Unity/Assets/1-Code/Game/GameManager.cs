@@ -28,10 +28,20 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    #region Enums
+    public enum PlayerMode
+    {
+        Administrator,
+        Character
+    }
+    #endregion
+
     #region Vars
     PlayerCharacter m_currentPlayerChar;
 
     public Vec2Int playableSize = new Vec2Int(16, 16);
+
+    PlayerMode m_playingMode;
     #endregion
 
     #region Gets/Sets
@@ -45,6 +55,7 @@ public class GameManager : MonoBehaviour
 	void Start () 
     {
         Init();
+        m_playingMode = PlayerMode.Administrator;
 	}
 
     void Init()
@@ -69,4 +80,38 @@ public class GameManager : MonoBehaviour
 	void Update () {
 	
 	}
+
+    public void SwitchToCharacterMode()
+    {
+        //Already in that mode
+        if (m_playingMode == PlayerMode.Character)
+        {
+            return;
+        }
+
+        m_playingMode = PlayerMode.Character;
+
+        m_currentPlayerChar = (PlayerCharacter)GameObject.Instantiate(PrefabAssets.Singleton.prefabPlayerCharacter, CameraManager.Singleton.worldCamera.transform.position, Quaternion.identity);
+
+        CameraManager.Singleton.worldCamera.FollowPlayer = true;
+    }
+
+    public void SwitchToBuildMode()
+    {
+        if (m_playingMode == PlayerMode.Administrator)
+        {
+            return;
+        }
+
+        m_playingMode = PlayerMode.Administrator;
+
+        if (m_currentPlayerChar != null)
+        {
+            Destroy(m_currentPlayerChar.gameObject);
+        }
+
+        m_currentPlayerChar = null;
+
+        CameraManager.Singleton.worldCamera.FollowPlayer = false;
+    }
 }

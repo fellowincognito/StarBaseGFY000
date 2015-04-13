@@ -56,6 +56,7 @@ public class GroundManager : MonoBehaviour
     public GameObject debugCheckerGO;
 
     ushort[] m_groundTiles;
+    BaseGroundObject[] m_groundTilesGOs;
     Vec2Int m_groundTileDim;
 
     bool m_doHighlight;
@@ -203,6 +204,7 @@ public class GroundManager : MonoBehaviour
     {
         m_groundTileDim = tileDim;
         m_groundTiles = new ushort[m_groundTileDim.x * m_groundTileDim.y];
+        m_groundTilesGOs = new BaseGroundObject[m_groundTiles.Length];
         m_tempSelectHolograms = new List<HologramObject>();
         m_selectedHolograms = new List<HologramObject>();
         
@@ -275,9 +277,13 @@ public class GroundManager : MonoBehaviour
                 {
                     //Straight wall piece
                     case 17:
-                    case 98:
+                    case 24:
+                    case 34:
                     case 49:
+                    case 66:
+                    case 98:
                     case 132:
+                    case 136:
                     case 152:
                     case 196:
                     case 245:
@@ -345,7 +351,24 @@ public class GroundManager : MonoBehaviour
         }
         else if (selectType == WorldOrthoCamera.SelectionType.Addition)
         {
-            m_selectedTiles.AddRange(m_tempSelectedTiles);
+            for (int i = 0; i < m_tempSelectedTiles.Count; i++)
+            {
+                bool alreadyPresent = false;
+                for (int j = 0; j < m_selectedTiles.Count; j++)
+                {
+                    if (m_tempSelectedTiles[i] == m_selectedTiles[j])
+                    {
+                        alreadyPresent = true;
+                    }
+                }
+
+                if (!alreadyPresent)
+                {
+                    m_selectedTiles.Add(m_tempSelectedTiles[i]);
+                    alreadyPresent = false;
+                }
+            }
+            //m_selectedTiles.AddRange(m_tempSelectedTiles);
         }
         else if (selectType == WorldOrthoCamera.SelectionType.Subtraction)
         {
@@ -508,10 +531,14 @@ public class GroundManager : MonoBehaviour
     /// </summary>
     public void UpdateGraphicalTile(int tileIndex, Vec2Int xz, int neighborIndex)
     {
-        TileObject tilePiece = (TileObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabGroundTile);
-        tilePiece.transform.parent = this.transform;
-        tilePiece.transform.position = new Vector3(xz.x + tilePiece.defaultOffset.x, tilePiece.defaultOffset.y, xz.y + tilePiece.defaultOffset.z);
-        tilePiece.gameObject.SetActive(true);
+        TileObject tilePiece = CacheManager.Singleton.RequestGroundTile(); //(TileObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabGroundTile);
+        //tilePiece.transform.parent = this.transform;
+        //tilePiece.transform.position = new Vector3(xz.x + tilePiece.defaultOffset.x, tilePiece.defaultOffset.y, xz.y + tilePiece.defaultOffset.z);
+        //tilePiece.gameObject.SetActive(true);
+
+        tilePiece.AssignToPosition(xz, 0f, true);
+
+        m_groundTilesGOs[tileIndex] = tilePiece;
     }
 
     /// <summary>
@@ -527,7 +554,7 @@ public class GroundManager : MonoBehaviour
         float rot = 0f;
         if (wallType == WallType.Corner)
         {
-            wallPiece = (WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCorner);
+            wallPiece = CacheManager.Singleton.RequestWallCorner();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCorner);
             
             //Rotation
             if (neighborIndex == 185)
@@ -548,11 +575,11 @@ public class GroundManager : MonoBehaviour
         }
         else if (wallType == WallType.Cross)
         {
-            wallPiece = (WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCross);
+            wallPiece = CacheManager.Singleton.RequestWallCross();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCross);
         }
         else //if (wallType == WallType.Straight)
         {
-            wallPiece = (WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallStraight);
+            wallPiece = CacheManager.Singleton.RequestWallStraight();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallStraight);
             
             //Horizontal
             //if (neighborIndex == 49 || neighborIndex == 196)
@@ -562,18 +589,21 @@ public class GroundManager : MonoBehaviour
             //        case 196:
             //        case 245:
             //        case 250:
-            if(neighborIndex == 98 || neighborIndex == 152)
+            if(neighborIndex == 98 || neighborIndex == 152 || neighborIndex == 24 || neighborIndex == 34 || neighborIndex == 136 || neighborIndex == 66)
             {
                 //wallPiece.transform.rotation = Quaternion.Euler(0, wallPiece.defaultOrientation + 90f, 0f);
                 rot = wallPiece.defaultOrientation;
             }
         }
 
-        wallPiece.transform.parent = this.transform;
-        wallPiece.transform.position = new Vector3(xz.x + wallPiece.defaultOffset.x, wallPiece.defaultOffset.y, xz.y + wallPiece.defaultOffset.z);
-        wallPiece.gameObject.SetActive(true);
-        wallPiece.transform.rotation = Quaternion.Euler(0f, rot, 0f);
-        wallPiece.SetTilePos(xz);
+        wallPiece.AssignToPosition(xz, rot, true);
+
+        m_groundTilesGOs[tileIndex] = wallPiece;
+        //wallPiece.transform.parent = this.transform;
+        //wallPiece.transform.position = new Vector3(xz.x + wallPiece.defaultOffset.x, wallPiece.defaultOffset.y, xz.y + wallPiece.defaultOffset.z);
+        //wallPiece.gameObject.SetActive(true);
+        //wallPiece.transform.rotation = Quaternion.Euler(0f, rot, 0f);
+        //wallPiece.SetTilePos(xz);
     }
     #endregion
 
@@ -655,4 +685,26 @@ public class GroundManager : MonoBehaviour
         }
     }
     #endregion
+
+    public void AttemptBuildTile(PlayerCharacter pc, Vec2Int tilePos, Vector3 clickPosition)
+    {
+        float dist = Vector3.SqrMagnitude(clickPosition - pc.transform.position);
+        float testDist = 3f * 3f;
+
+        int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
+        GroundManager.GroundTileType tileType = (GroundManager.GroundTileType)m_groundTiles[index];
+
+        if (dist < testDist + 0.00001f && tileType != GroundTileType.None)
+        {            
+            m_groundTiles[index] = 2;
+            //m_groundTilesGOs[index].renderer.material = DefaultFilesManager.Singleton.builtTile;
+
+            if (m_groundTilesGOs[index] == null)
+            {
+                Debug.LogError("Error");
+            }
+
+            m_groundTilesGOs[index].BuildObject();
+        }
+    }
 }

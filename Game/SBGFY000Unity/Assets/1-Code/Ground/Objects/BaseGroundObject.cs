@@ -37,4 +37,28 @@ public class BaseGroundObject : MonoBehaviour
     {
         m_tilePos = pos;
     }
+
+    public virtual void SetMaterial(Material mat)
+    {
+        
+    }
+
+    public virtual void ToggleCollider(bool enableCollider)
+    {
+        if (theCollider != null)
+        {
+            theCollider.enabled = enableCollider;
+        }
+    }
+
+    public virtual void AssignToPosition(Vec2Int position, float rot, bool asHologram)
+    {
+        this.transform.parent = this.transform;
+        this.transform.position = new Vector3(position.x + defaultOffset.x, defaultOffset.y, position.y + defaultOffset.z);
+        this.gameObject.SetActive(true);
+        this.transform.rotation = Quaternion.Euler(0f, rot, 0f);
+        this.SetTilePos(position);
+    }
+
+    public virtual void BuildObject() { }
 }

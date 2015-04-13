@@ -30,6 +30,8 @@ public class PrefabAssets : MonoBehaviour
 
     //Game Objects
     public GameObject tileObject;
+
+    public PlayerCharacter prefabPlayerCharacter;
     
     //Props
     public TileObject prefabGroundTile;
@@ -44,4 +46,7 @@ public class PrefabAssets : MonoBehaviour
     //Materials
     public Material hologramMat;
     public Material defaultDiffuse;
+    public Material groundGray;
+    public Material wallMatGray;
+    public Material wallHologramMat;
 }

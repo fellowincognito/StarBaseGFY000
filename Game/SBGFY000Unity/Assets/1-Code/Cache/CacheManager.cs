@@ -35,13 +35,33 @@ public class CacheManager : MonoBehaviour
     private float m_updateTimer;
     private float m_updateTimerDelta = 1f / 10f;
 
-    GroundTileCache m_highLightTileCache;
+    HologramTileCache m_highLightTileCache;
+    GroundTileCache m_tileCache;
+    WallCornerCache m_wallCornerCache;
+    WallCrossCache m_wallCrossCache;
+    WallStraightCache m_wallStraightCache;
+    WallTCache m_wallTCache;
     #endregion
 
     public void Init()
     {
-        m_highLightTileCache = new GroundTileCache();
+        m_highLightTileCache = new HologramTileCache();
         m_highLightTileCache.Init(256, (1f / 5f));
+
+        m_tileCache = new GroundTileCache();
+        m_tileCache.Init(256, (1f / 5f));
+
+        m_wallCornerCache = new WallCornerCache();
+        m_wallCornerCache.Init(64, (1f / 5f));
+
+        m_wallCrossCache = new WallCrossCache();
+        m_wallCrossCache.Init(64, (1f / 5f));
+        
+        m_wallStraightCache = new WallStraightCache();
+        m_wallStraightCache.Init(256, (1f / 5f));
+        
+        m_wallTCache = new WallTCache();
+        m_wallTCache.Init(32, (1f / 5f));
 
         this.enabled = true;
     }
@@ -50,6 +70,10 @@ public class CacheManager : MonoBehaviour
     {
         //Do the maintenance for each cache
         m_highLightTileCache.Maintenance();
+        m_wallCornerCache.Maintenance();
+        m_wallCrossCache.Maintenance();
+        m_wallStraightCache.Maintenance();
+        m_wallTCache.Maintenance();
 
         if (m_updateTimer > Time.time)
             return;
@@ -62,6 +86,10 @@ public class CacheManager : MonoBehaviour
         try
         {
             m_highLightTileCache.Dispose();
+            m_wallCornerCache.Dispose();
+            m_wallCrossCache.Dispose();
+            m_wallStraightCache.Dispose();
+            m_wallTCache.Dispose();
         }
         catch (System.Exception ex)
         {
@@ -83,6 +111,90 @@ public class CacheManager : MonoBehaviour
         holo.gameObject.SetActive(false);
 
         m_highLightTileCache.ReturnObject(holo);
+    }
+    #endregion
+
+    #region Ground Tile Management
+    public TileObject RequestGroundTile()
+    {
+        return m_tileCache.RequestObject();
+    }
+
+    public void ReturnGroundTile(TileObject tile)
+    {
+        tile.SetTilePos(new Vec2Int(-1, -1));
+        tile.gameObject.transform.parent = this.transform;
+        tile.gameObject.SetActive(false);
+
+        m_tileCache.ReturnObject(tile);
+    }
+    #endregion
+
+    #region Wall Straight Management
+    public WallObject RequestWallStraight()
+    {
+        return m_wallStraightCache.RequestObject();
+    }
+
+    public void ReturnWallStraight(WallObject wall)
+    {
+        wall.SetTilePos(new Vec2Int(-1, -1));
+        wall.SetMaterial(PrefabAssets.Singleton.wallHologramMat);
+        wall.gameObject.transform.parent = this.transform;
+        wall.gameObject.SetActive(false);
+
+        m_wallStraightCache.ReturnObject(wall);
+    }
+    #endregion
+
+    #region Wall Corner Management
+    public WallObject RequestWallCorner()
+    {
+        return m_wallCornerCache.RequestObject();
+    }
+
+    public void ReturnWallCorner(WallObject wall)
+    {
+        wall.SetTilePos(new Vec2Int(-1, -1));
+        wall.SetMaterial(PrefabAssets.Singleton.wallHologramMat);
+        wall.gameObject.transform.parent = this.transform;
+        wall.gameObject.SetActive(false);
+
+        m_wallCornerCache.ReturnObject(wall);
+    }
+    #endregion
+
+    #region Wall Cross Management
+    public WallObject RequestWallCross()
+    {
+        return m_wallCrossCache.RequestObject();
+    }
+
+    public void ReturnWallCross(WallObject wall)
+    {
+        wall.SetTilePos(new Vec2Int(-1, -1));
+        wall.SetMaterial(PrefabAssets.Singleton.wallHologramMat);
+        wall.gameObject.transform.parent = this.transform;
+        wall.gameObject.SetActive(false);
+
+        m_wallCrossCache.ReturnObject(wall);
+    }
+    #endregion
+
+    #region Wall T Management
+    public WallObject RequestWallT()
+    {
+        return m_wallTCache.RequestObject();
+    }
+
+    public void ReturnWallT(WallObject wall)
+    {
+        wall.SetTilePos(new Vec2Int(-1, -1));
+        wall.SetMaterial(PrefabAssets.Singleton.wallHologramMat);
+        wall.gameObject.transform.parent = this.transform;
+        wall.gameObject.SetActive(false);
+
+        m_wallTCache.ReturnObject(wall);
     }
     #endregion
 }
