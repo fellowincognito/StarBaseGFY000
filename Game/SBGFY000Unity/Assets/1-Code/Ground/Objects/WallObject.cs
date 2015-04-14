@@ -15,6 +15,14 @@ public class WallObject : BaseGroundObject
     public GameObject bottomArt;
     public GameObject topArt; //This piece can be hidden when the player wants to see more
 
+    [SerializeField]
+    protected GroundManager.WallType m_wallType;
+
+    public GroundManager.WallType WallType
+    {
+        get { return m_wallType; }
+    }
+
     // Use this for initialization
     void Start()
     {
@@ -32,6 +40,11 @@ public class WallObject : BaseGroundObject
 
         bottomArt.renderer.material = mat;
         topArt.renderer.material = mat;
+    }
+
+    public void SetWallType(GroundManager.WallType wallType)
+    {
+        m_wallType = wallType;
     }
 
     public override void AssignToPosition(Vec2Int position, float rot, bool asHologram)

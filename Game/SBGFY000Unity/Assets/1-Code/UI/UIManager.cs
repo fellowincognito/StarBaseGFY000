@@ -54,6 +54,8 @@ public class UIManager : MonoBehaviour
     public GameObject UIBuildPanel;
     public GameObject UIConfirmationPanel;
 
+    public Text UIMousePos;
+
     [SerializeField]
     protected bool m_isInBuildingMode;
     protected CreationAction m_currentPendingCreationAction;
@@ -237,6 +239,11 @@ public class UIManager : MonoBehaviour
         CameraManager.Singleton.selectionMode = CameraManager.CameraSelectionMode.None;
     }
     #endregion
+
+    public void SetMousePosition(string text)
+    {
+        UIMousePos.text = text;
+    }
 
     void Update()
     {

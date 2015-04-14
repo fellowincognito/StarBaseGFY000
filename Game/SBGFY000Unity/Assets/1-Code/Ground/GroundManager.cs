@@ -73,6 +73,11 @@ public class GroundManager : MonoBehaviour
     List<HologramObject> m_selectedHolograms;
     List<Vec2Int> m_tempSelectedTiles;
     List<Vec2Int> m_selectedTiles;
+
+    //Keep a reference to these so we don't have to keep casting back and forth during the fairly tight loops
+    ushort m_shortCut_emptyIndex;
+    ushort m_shortCut_groundIndex;
+    ushort m_shortCut_wallIndex;
     #endregion
 
     #region Gets/Sets
@@ -145,8 +150,24 @@ public class GroundManager : MonoBehaviour
         return (x * m_groundTileDim.x) + z;
     }
 
+    public void SetTileToType(int index, ushort value)
+    {
+        m_groundTiles[index] = value;
+    }
+
+    public void SetTileGO(int index, BaseGroundObject newObject)
+    {
+        m_groundTilesGOs[index] = newObject;
+    }
+
     #region Neighbor Related Things
-    private bool IsATilePresentAtLocation(int x, int z)
+    /// <summary>
+    /// Returns true if tile is empty (0)
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    private bool IsNeighborATileType(int x, int z, ushort targetValue)
     {
         //Check the bounds to make sure we are within them
         if (x < 0 || z < 0 || x > m_groundTileDim.x - 1 || z > m_groundTileDim.y - 1)
@@ -154,45 +175,83 @@ public class GroundManager : MonoBehaviour
             //Debug.Log("out of bounds " + x + " " + y);
             return false;
         }
-
-        //Since we're using bools here, just return the value from the array now that we've bounds checked
-        return (m_groundTiles[(m_groundTileDim.x * x) + z] == 0) ? true : false;
+        
+        return (m_groundTiles[(m_groundTileDim.x * x) + z] == targetValue) ? true : false;
     }
 
-    private int ComputeNeighborIndex(int x, int z)
+    public int ComputeWallNeighborIndex(int x, int z)
     {
         int index = 0;
 
         //Up
-        if (IsATilePresentAtLocation(x, z - 1))
+        if (IsNeighborATileType(x, z - 1, m_shortCut_wallIndex))
             index |= 1;
 
         //Right
-        if (IsATilePresentAtLocation(x + 1, z))
+        if (IsNeighborATileType(x + 1, z, m_shortCut_wallIndex))
             index |= 2;
 
         //Down
-        if (IsATilePresentAtLocation(x, z + 1))
+        if (IsNeighborATileType(x, z + 1, m_shortCut_wallIndex))
             index |= 4;
 
         //Left
-        if (IsATilePresentAtLocation(x - 1, z))
+        if (IsNeighborATileType(x - 1, z, m_shortCut_wallIndex))
             index |= 8;
 
-        //Upper Left
-        if (IsATilePresentAtLocation(x - 1, z - 1))
+        //Lower Left
+        if (IsNeighborATileType(x - 1, z - 1, m_shortCut_wallIndex))
             index |= 16;
 
-        //Upper Right
-        if (IsATilePresentAtLocation(x + 1, z - 1))
+        //Lower Right
+        if (IsNeighborATileType(x + 1, z - 1, m_shortCut_wallIndex))
             index |= 32;
 
-        //Lower Right
-        if (IsATilePresentAtLocation(x + 1, z + 1))
+        //Upper Right
+        if (IsNeighborATileType(x + 1, z + 1, m_shortCut_wallIndex))
             index |= 64;
 
+        //Upper Left
+        if (IsNeighborATileType(x - 1, z + 1, m_shortCut_wallIndex))
+            index |= 128;
+
+        return index;
+    }
+
+    public int ComputeEmptyNeighborIndex(int x, int z)
+    {
+        int index = 0;
+
+        //Up
+        if (IsNeighborATileType(x, z - 1, m_shortCut_emptyIndex))
+            index |= 1;
+
+        //Right
+        if (IsNeighborATileType(x + 1, z, m_shortCut_emptyIndex))
+            index |= 2;
+
+        //Down
+        if (IsNeighborATileType(x, z + 1, m_shortCut_emptyIndex))
+            index |= 4;
+
+        //Left
+        if (IsNeighborATileType(x - 1, z, m_shortCut_emptyIndex))
+            index |= 8;
+
         //Lower Left
-        if (IsATilePresentAtLocation(x - 1, z + 1))
+        if (IsNeighborATileType(x - 1, z - 1, m_shortCut_emptyIndex))
+            index |= 16;
+
+        //Lower Right
+        if (IsNeighborATileType(x + 1, z - 1, m_shortCut_emptyIndex))
+            index |= 32;
+
+        //Upper Right
+        if (IsNeighborATileType(x + 1, z + 1, m_shortCut_emptyIndex))
+            index |= 64;
+
+        //Upper Left
+        if (IsNeighborATileType(x - 1, z + 1, m_shortCut_emptyIndex))
             index |= 128;
 
         return index;
@@ -210,6 +269,10 @@ public class GroundManager : MonoBehaviour
         
         m_tempSelectedTiles = new List<Vec2Int>();
         m_selectedTiles = new List<Vec2Int>();
+
+        m_shortCut_emptyIndex = (ushort)GroundTileType.None;
+        m_shortCut_groundIndex = (ushort)GroundTileType.Ground;
+        m_shortCut_wallIndex = (ushort)GroundTileType.Wall; ;
 
         SetUpDebug();
     }
@@ -259,65 +322,243 @@ public class GroundManager : MonoBehaviour
                 continue;
             }
 
-            m_groundTiles[index] = (ushort)tileType;
+            SetTileToType(index, (ushort)tileType);
             modifiedIndices.Add(new Vec2Int(m_selectedTiles[i].x, m_selectedTiles[i].y));
         }
 
         //Now that the tiles have been assigned, should check if its a TempRoom, and if so, we need to do further checking (for assigning walls and shit)
         if (tileType == GroundTileType.TempRoom)
         {
+            //First go through and figure out which should be just floor tiles. Floor tiles will be ones with a neighbor on all sides (value of 255)
+            //Start at the end and work towards start so we won't skip tiles due to removed indices shifting things about
+            for (int i = modifiedIndices.Count - 1; i > -1 ; i--)
+            {
+                ProcessForFloorTiles(ref modifiedIndices, i);
+            }
+
+            //All ground tiles should have been removed from ProcessForFloorTiles, so modifiedIndices should only retain wall tiles. Now we need to figure out what specific tiles they are
             for (int i = 0; i < modifiedIndices.Count; i++)
             {
-                int tileIndex = ConvertTwoIntToInt(modifiedIndices[i].x, modifiedIndices[i].y);
-                int neighborIndex = ComputeNeighborIndex(modifiedIndices[i].x, modifiedIndices[i].y);
-
-                Debug.Log(string.Format("x {0} z {1}: neighborindex: {2}", modifiedIndices[i].x, modifiedIndices[i].y, neighborIndex));
-
-                switch (neighborIndex)
-                {
-                    //Straight wall piece
-                    case 17:
-                    case 24:
-                    case 34:
-                    case 49:
-                    case 66:
-                    case 98:
-                    case 132:
-                    case 136:
-                    case 152:
-                    case 196:
-                    case 245:
-                    case 250:
-                        m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
-                        UpdateGraphicalTile(tileIndex, modifiedIndices[i], neighborIndex, WallType.Straight);
-                        break;
-
-                    //Corner wall piece
-                    case 185:
-                    case 230:
-                    case 220:
-                    case 115:
-                        m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
-                        UpdateGraphicalTile(tileIndex, modifiedIndices[i], neighborIndex, WallType.Corner);
-                        break;
-
-                    //4 way cross piece
-                    case 255:
-                    case 247:
-                    case 251:
-                    case 253:
-                    case 254:
-                        m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
-                        UpdateGraphicalTile(tileIndex, modifiedIndices[i], neighborIndex, WallType.Cross);
-                        break;
-
-                    default:
-                        //Place a basic ground tile
-                        m_groundTiles[tileIndex] = (ushort)GroundTileType.Ground;
-                        UpdateGraphicalTile(tileIndex, modifiedIndices[i], neighborIndex);
-                        break;
-                }
+                ProcessForWallTiles(ref modifiedIndices, i, 2);
             }
+
+            //for (int i = 0; i < modifiedIndices.Count; i++)
+            //{
+            //    ProcessTile(modifiedIndices[i], 3);
+            //}
+        }
+    }
+
+    private void ProcessForFloorTiles(ref List<Vec2Int> suspectTiles, int listIndex)
+    {
+        Vec2Int tile = suspectTiles[listIndex];
+        int tileIndex = ConvertVec2IntToInt(tile);
+        int neighborIndex = ComputeEmptyNeighborIndex(tile.x, tile.y);
+
+        Debug.Log("Floor " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
+
+        //This tile is surrounded on all sides by some kind of tile/wall/something, and thus this must be a ground tile
+        //In this case, it's surrounded by "TempRoom"
+        if (neighborIndex == 0)
+        {
+            SetTileToType(tileIndex, m_shortCut_groundIndex);
+            UpdateGraphicalTile(tileIndex, tile, neighborIndex);
+
+            //Remove it from the list as we're going to be reiterating through again for walls
+            suspectTiles.RemoveAt(listIndex);
+        }
+        else
+        {
+            //Otherwise it must be some kind of wall, and we'll figure out what exactly elsewhere
+            SetTileToType(tileIndex, m_shortCut_wallIndex);
+        }
+    }
+
+    private void ProcessForWallTiles(ref List<Vec2Int> suspectWallTiles, int listIndex, int allowAnotherLevel)
+    {
+        if (allowAnotherLevel < 0)
+            return;
+
+        allowAnotherLevel--;
+
+        Vec2Int tile = suspectWallTiles[listIndex];
+        int tileIndex = ConvertVec2IntToInt(tile);
+        int neighborIndex = ComputeWallNeighborIndex(tile.x, tile.y);
+        int otherNeighbor = 0;
+
+        Debug.Log("Wall " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
+
+        switch (neighborIndex)
+        {
+            //Corner wall piece
+            case 1:
+            case 3:
+            case 6:
+            case 9:
+            case 12:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner);
+                break;
+
+            //Straight wall piece
+            case 5:
+            case 10:
+            case 21:
+            case 26:
+            case 37:
+            case 42:
+            case 58:
+            case 69:
+            case 74:
+            case 101:
+            case 133:
+            case 138:
+            case 149:
+            case 202:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                break;
+
+                //Straight, but right adjoining a neighor piece that might require an update
+            case 122:
+            case 234:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                otherNeighbor = ComputeEmptyNeighborIndex(tile.x + 1, tile.y);
+                ProcessTile(new Vec2Int(tile.x + 1, tile.y), allowAnotherLevel);
+                break;
+
+            //Straight, but left adjoining a neighor piece that might require an update
+            case 186:
+            case 218:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                otherNeighbor = ComputeEmptyNeighborIndex(tile.x - 1, tile.y);
+                ProcessTile(new Vec2Int(tile.x - 1, tile.y), allowAnotherLevel);
+                break;
+
+            //Straight, but top adjoining a neighor piece that might require an update
+            case 229:
+            case 213:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                otherNeighbor = ComputeEmptyNeighborIndex(tile.x, tile.y + 1);
+                ProcessTile(new Vec2Int(tile.x, tile.y + 1), allowAnotherLevel);
+                break;
+
+            //Straight, but bottom adjoining a neighor piece that might require an update
+            case 117:
+            case 181:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                otherNeighbor = ComputeEmptyNeighborIndex(tile.x, tile.y - 1);
+                ProcessTile(new Vec2Int(tile.x, tile.y - 1), allowAnotherLevel);
+                break;
+        }
+    }
+
+    private void ProcessTile(Vec2Int tilePos, int goDeeper)
+    {
+        if (goDeeper < 1)
+            return;
+
+        goDeeper--;
+
+        int tileIndex = ConvertTwoIntToInt(tilePos.x, tilePos.y);
+        int neighborIndex = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y);
+        int otherNeighbor = 0;
+
+        Debug.Log(string.Format("x {0} z {1}: neighborindex: {2}", tilePos.x, tilePos.y, neighborIndex));
+
+        switch (neighborIndex)
+        {
+            //3 Way
+            case 16:
+            case 32:
+            case 64:
+            case 128:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
+                break;
+
+            //Straight wall, but also should update its neighbor to the left
+            case 17:
+            case 132:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x + 1, tilePos.y);
+                //ProcessTile(new Vec2Int(tilePos.x + 1, tilePos.y), goDeeper);
+                break;
+
+            //Straight wall, but also should update its neighbor to the right
+            case 33:
+            case 68:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x - 1, tilePos.y);
+                //ProcessTile(new Vec2Int(tilePos.x - 1, tilePos.y), goDeeper);
+                break;
+
+                //Straight wall, but also should update its neighbor to top
+            case 24:
+            case 34:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y + 1);
+                //ProcessTile(new Vec2Int(tilePos.x, tilePos.y + 1), goDeeper);
+                break;
+
+            //Straight wall piece
+            case 49:
+            case 66:
+            case 98:            
+            case 136:
+            case 152:
+            case 196:
+            case 245:
+            case 250:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+                break;
+
+            //Corner wall piece
+            case 185:
+            case 230:
+            case 220:
+            case 115:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Corner);
+                break;
+
+            //4 way cross piece
+            case 255:
+            case 247:
+            case 251:
+            case 253:
+            case 254:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Cross);
+                break;
+
+            //3 Way
+            //case 33:
+            //case 68:
+            //    m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
+            //    UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
+            //    break;
+
+            default:
+                //Place a basic ground tile
+                SetTileToType(tileIndex, m_shortCut_groundIndex);
+                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex);
+                break;
         }
     }
 
@@ -538,7 +779,7 @@ public class GroundManager : MonoBehaviour
 
         tilePiece.AssignToPosition(xz, 0f, true);
 
-        m_groundTilesGOs[tileIndex] = tilePiece;
+        SetTileGO(tileIndex, tilePiece);
     }
 
     /// <summary>
@@ -552,53 +793,102 @@ public class GroundManager : MonoBehaviour
     {
         WallObject wallPiece = null; //m_tilePos
         float rot = 0f;
-        if (wallType == WallType.Corner)
+
+        if (m_groundTilesGOs[tileIndex] == null)
         {
-            wallPiece = CacheManager.Singleton.RequestWallCorner();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCorner);
-            
-            //Rotation
-            if (neighborIndex == 185)
+
+            if (wallType == WallType.Corner)
             {
-                //wallPiece.transform.rotation = Quaternion.Euler(0, 90f + wallPiece.defaultOrientation, 0f);
-                rot = 90f + wallPiece.defaultOrientation;
+                wallPiece = CacheManager.Singleton.RequestWallCorner();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCorner);
+
+                //Rotation
+                if (neighborIndex == 6)
+                {
+                    //wallPiece.transform.rotation = Quaternion.Euler(0, 90f + wallPiece.defaultOrientation, 0f);
+                    rot = 90f + wallPiece.defaultOrientation;
+                }
+                else if (neighborIndex == 1 || neighborIndex == 3)
+                {
+                    //wallPiece.transform.rotation = Quaternion.Euler(0, 180f + wallPiece.defaultOrientation, 0f);
+                    rot = 180f + wallPiece.defaultOrientation;
+                }
+                else if (neighborIndex == 9)
+                {
+                    //wallPiece.transform.rotation = Quaternion.Euler(0, 270f + wallPiece.defaultOrientation, 0f);
+                    rot = 270f + wallPiece.defaultOrientation;
+                }
             }
-            else if (neighborIndex == 220)
+            else if (wallType == WallType.Cross)
             {
-                //wallPiece.transform.rotation = Quaternion.Euler(0, 180f + wallPiece.defaultOrientation, 0f);
-                rot = 180f + wallPiece.defaultOrientation;
+                wallPiece = CacheManager.Singleton.RequestWallCross();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCross);
             }
-            else if (neighborIndex == 230)
+            else if (wallType == WallType.ThreeWay)
             {
-                //wallPiece.transform.rotation = Quaternion.Euler(0, 270f + wallPiece.defaultOrientation, 0f);
-                rot = 270f + wallPiece.defaultOrientation;
+                wallPiece = CacheManager.Singleton.RequestWallT();
+
+                //if (neighborIndex == 32 || neighborIndex == 64)
+                //{
+                //    rot = wallPiece.defaultOrientation + 90f;
+                //}
+                /*else*/ if(neighborIndex == 16 || neighborIndex == 32)
+                {
+                    rot = wallPiece.defaultOrientation + 180f;
+                }
+                //else if (neighborIndex == 24 || neighborIndex == 32)
+                //{
+                //    rot = wallPiece.defaultOrientation + 180f;
+                //}
             }
+            else //if (wallType == WallType.Straight)
+            {
+                wallPiece = CacheManager.Singleton.RequestWallStraight();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallStraight);
+
+                //Horizontal
+                if (neighborIndex == 37 || neighborIndex == 149 || neighborIndex == 133 || neighborIndex == 21 || neighborIndex == 69 || neighborIndex == 5 || neighborIndex == 101
+                    || neighborIndex == 229 || neighborIndex == 213 || neighborIndex == 117 || neighborIndex == 181)
+                {
+                    //wallPiece.transform.rotation = Quaternion.Euler(0, wallPiece.defaultOrientation + 90f, 0f);
+                    rot = wallPiece.defaultOrientation;
+                }
+            }
+
+            wallPiece.AssignToPosition(xz, rot, true);
+            wallPiece.SetWallType(wallType);
         }
-        else if (wallType == WallType.Cross)
+        else
         {
-            wallPiece = CacheManager.Singleton.RequestWallCross();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallCross);
-        }
-        else //if (wallType == WallType.Straight)
-        {
-            wallPiece = CacheManager.Singleton.RequestWallStraight();//(WallObject)GameObject.Instantiate(PrefabAssets.Singleton.prefabWallStraight);
-            
-            //Horizontal
-            //if (neighborIndex == 49 || neighborIndex == 196)
-            //case 152:
-            //        case 98:
-            //        case 49:
-            //        case 196:
-            //        case 245:
-            //        case 250:
-            if(neighborIndex == 98 || neighborIndex == 152 || neighborIndex == 24 || neighborIndex == 34 || neighborIndex == 136 || neighborIndex == 66)
+            wallPiece = (m_groundTilesGOs[tileIndex] as WallObject);
+
+            //If the exist type doesn't match the desired type, return it, and then get a new one
+            if (wallPiece.WallType != wallType)
             {
-                //wallPiece.transform.rotation = Quaternion.Euler(0, wallPiece.defaultOrientation + 90f, 0f);
-                rot = wallPiece.defaultOrientation;
+                switch (wallPiece.WallType)
+                {
+                    case WallType.Corner:
+                        CacheManager.Singleton.ReturnWallCorner(wallPiece);
+                        break;
+
+                    case WallType.Cross:
+                        CacheManager.Singleton.ReturnWallCross(wallPiece);
+                        break;
+
+                    case WallType.Straight:
+                        CacheManager.Singleton.ReturnWallStraight(wallPiece);
+                        break;
+
+                    case WallType.ThreeWay:
+                        CacheManager.Singleton.ReturnWallT(wallPiece);
+                        break;
+                }
+
+                SetTileGO(tileIndex, null);
+                wallPiece = null;
+                UpdateGraphicalTile(tileIndex, xz, neighborIndex, wallType);
+                return;
             }
         }
 
-        wallPiece.AssignToPosition(xz, rot, true);
-
-        m_groundTilesGOs[tileIndex] = wallPiece;
+        SetTileGO(tileIndex, wallPiece);
         //wallPiece.transform.parent = this.transform;
         //wallPiece.transform.position = new Vector3(xz.x + wallPiece.defaultOffset.x, wallPiece.defaultOffset.y, xz.y + wallPiece.defaultOffset.z);
         //wallPiece.gameObject.SetActive(true);
@@ -695,8 +985,8 @@ public class GroundManager : MonoBehaviour
         GroundManager.GroundTileType tileType = (GroundManager.GroundTileType)m_groundTiles[index];
 
         if (dist < testDist + 0.00001f && tileType != GroundTileType.None)
-        {            
-            m_groundTiles[index] = 2;
+        {
+            //SetTileToType(index, m_shortCut_groundIndex);
             //m_groundTilesGOs[index].renderer.material = DefaultFilesManager.Singleton.builtTile;
 
             if (m_groundTilesGOs[index] == null)

@@ -91,6 +91,13 @@ public class WorldOrthoCamera : MonoBehaviour
             moveDir.z -= 1f;
         }
 
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            //Vec2Int mousePosTile = GroundManager.Singleton.ConvertWorldPositionToTile(WorldPointFromMouse());
+            //int index = GroundManager.Singleton.ComputeNeighborIndex(mousePosTile.x, mousePosTile.y);
+            //Debug.Log(string.Format("X {0} Y {1}: Index {2}", mousePosTile.x, mousePosTile.y, index));
+        }
+
         this.gameObject.transform.Translate(moveDir * Time.deltaTime * 2f, Space.Self);
     }
 
@@ -154,6 +161,9 @@ public class WorldOrthoCamera : MonoBehaviour
                 GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
             }
         }
+
+        Vec2Int mousePosTile = GroundManager.Singleton.ConvertWorldPositionToTile(m_currentMousePos);
+        UIManager.Singleton.SetMousePosition(string.Format("Tile: {0},{1}", mousePosTile.x, mousePosTile.y));
     }
 
     void OnDrawGizmos()
