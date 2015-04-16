@@ -130,12 +130,22 @@ public class GroundManager : MonoBehaviour
     {
         int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
 
+        if (index < 0 || index > m_groundTiles.Length)
+        {
+            return GroundTileType.None;
+        }
+
         return (GroundTileType)m_groundTiles[index];
     }
 
     public GroundTileType GetTileType(int x, int z)
     {
         int index = (x * m_groundTileDim.x) + z;
+
+        if (index < 0 || index > m_groundTiles.Length)
+        {
+            return GroundTileType.None;
+        }
 
         return (GroundTileType)m_groundTiles[index];
     }
@@ -341,11 +351,6 @@ public class GroundManager : MonoBehaviour
             {
                 ProcessForWallTiles(modifiedIndices[i], 1);
             }
-
-            //for (int i = 0; i < modifiedIndices.Count; i++)
-            //{
-            //    ProcessTile(modifiedIndices[i], 3);
-            //}
         }
     }
 
@@ -357,9 +362,16 @@ public class GroundManager : MonoBehaviour
 
         Debug.Log("Floor " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
 
+        bool isEdge = false;
+
+        if (tile.x == 0 || tile.x == m_groundTileDim.x - 1 || tile.y == 0 || tile.y == m_groundTileDim.y - 1)
+        {
+            isEdge = true;
+        }
+
         //This tile is surrounded on all sides by some kind of tile/wall/something, and thus this must be a ground tile
         //In this case, it's surrounded by "TempRoom"
-        if (neighborIndex == 0)
+        if (neighborIndex == 0 && !isEdge)
         {
             SetTileToType(tileIndex, m_shortCut_groundIndex);
             UpdateGraphicalTile(tileIndex, tile, neighborIndex);
@@ -410,6 +422,8 @@ public class GroundManager : MonoBehaviour
             case 4: 
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
                 UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                
                 break;
 
             case 5: 
@@ -662,7 +676,9 @@ public class GroundManager : MonoBehaviour
 
             case 53:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
                 break;
 
             case 54:
@@ -934,8 +950,11 @@ public class GroundManager : MonoBehaviour
                 UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
                 break;
 
-            case 106: SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+            case 106: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1 , tile.y), 1);
                 break;
 
             case 107:
@@ -1188,7 +1207,9 @@ public class GroundManager : MonoBehaviour
 
             case 154: 
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
                 break;
 
             case 155: 
@@ -1407,7 +1428,9 @@ public class GroundManager : MonoBehaviour
 
             case 197: 
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
                 break;
 
             case 198: 
@@ -2066,7 +2089,7 @@ public class GroundManager : MonoBehaviour
                     //wallPiece.transform.rotation = Quaternion.Euler(0, 90f + wallPiece.defaultOrientation, 0f);
                     rot = 90f + wallPiece.defaultOrientation;
                 }
-                else if (neighborIndex == 1 || neighborIndex == 3)
+                else if (neighborIndex == 1 || neighborIndex == 3 || neighborIndex == 2)
                 {
                     //wallPiece.transform.rotation = Quaternion.Euler(0, 180f + wallPiece.defaultOrientation, 0f);
                     rot = 180f + wallPiece.defaultOrientation;
@@ -2085,7 +2108,7 @@ public class GroundManager : MonoBehaviour
             {
                 wallPiece = CacheManager.Singleton.RequestWallT();
 
-                if (neighborIndex == 13 || neighborIndex == 77) 
+                if (neighborIndex == 13 || neighborIndex == 77 || neighborIndex == 205) 
                 {
                     rot = wallPiece.defaultOrientation + 270f;
                 }
@@ -2093,7 +2116,7 @@ public class GroundManager : MonoBehaviour
                 {
                     rot = wallPiece.defaultOrientation + 90f;
                 }
-                else if (neighborIndex == 11)
+                else if (neighborIndex == 11 || neighborIndex == 151 || neighborIndex == 75 || neighborIndex == 139)
                 {
                     rot = wallPiece.defaultOrientation + 180f;
                 }
@@ -2117,7 +2140,7 @@ public class GroundManager : MonoBehaviour
 
                 //Horizontal
                 if (neighborIndex == 37 || neighborIndex == 149 || neighborIndex == 133 || neighborIndex == 21 || neighborIndex == 69 || neighborIndex == 5 || neighborIndex == 101
-                    || neighborIndex == 229 || neighborIndex == 213 || neighborIndex == 117 || neighborIndex == 181 || neighborIndex == 197)
+                    || neighborIndex == 229 || neighborIndex == 213 || neighborIndex == 117 || neighborIndex == 181 || neighborIndex == 197 || neighborIndex == 53 )
                 {
                     //wallPiece.transform.rotation = Quaternion.Euler(0, wallPiece.defaultOrientation + 90f, 0f);
                     rot = wallPiece.defaultOrientation;
@@ -2254,6 +2277,12 @@ public class GroundManager : MonoBehaviour
         float testDist = 3f * 3f;
 
         int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
+
+        if (index < 0 || index > m_groundTiles.Length)
+        {
+            return;
+        }
+
         GroundManager.GroundTileType tileType = (GroundManager.GroundTileType)m_groundTiles[index];
 
         if (dist < testDist + 0.00001f && tileType != GroundTileType.None)

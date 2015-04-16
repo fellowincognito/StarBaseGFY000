@@ -68,6 +68,8 @@ public class WallObject : BaseGroundObject
     public override void BuildObject()
     {
         SetMaterial(PrefabAssets.Singleton.wallMatGray);
+
+        theCollider.enabled = true;
     }
     
 }
