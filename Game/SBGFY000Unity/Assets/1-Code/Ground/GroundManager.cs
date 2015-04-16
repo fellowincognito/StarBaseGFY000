@@ -339,7 +339,7 @@ public class GroundManager : MonoBehaviour
             //All ground tiles should have been removed from ProcessForFloorTiles, so modifiedIndices should only retain wall tiles. Now we need to figure out what specific tiles they are
             for (int i = 0; i < modifiedIndices.Count; i++)
             {
-                ProcessForWallTiles(ref modifiedIndices, i, 2);
+                ProcessForWallTiles(modifiedIndices[i], 1);
             }
 
             //for (int i = 0; i < modifiedIndices.Count; i++)
@@ -374,193 +374,1452 @@ public class GroundManager : MonoBehaviour
         }
     }
 
-    private void ProcessForWallTiles(ref List<Vec2Int> suspectWallTiles, int listIndex, int allowAnotherLevel)
+    private void ProcessForWallTiles(Vec2Int tile, int allowAnotherLevel)
     {
         if (allowAnotherLevel < 0)
             return;
 
         allowAnotherLevel--;
 
-        Vec2Int tile = suspectWallTiles[listIndex];
         int tileIndex = ConvertVec2IntToInt(tile);
         int neighborIndex = ComputeWallNeighborIndex(tile.x, tile.y);
-        int otherNeighbor = 0;
+        //int otherNeighbor = 0;
 
         Debug.Log("Wall " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
 
+        #region Large Switch for all neighbor conditions
         switch (neighborIndex)
         {
-            //Corner wall piece
-            case 1:
-            case 3:
-            case 6:
-            case 9:
-            case 12:
+            case 1: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                //ProcessForWallTiles(new Vec2Int(tile.x, tile.y), 1);
+                break;
+
+            case 2: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                break;
+
+            case 3: 
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
                 UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner);
                 break;
 
-            //Straight wall piece
-            case 5:
+            case 4: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                break;
+
+            case 5: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                break;
+
+            case 6: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 7: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay);
+
+                //ProcessForWallTiles(new Vec2Int(tile.x, tile.y), 1);
+                break;
+
+            case 8: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                break;
+
+            case 9: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner);
+                break;
+
             case 10:
-            case 21:
-            case 26:
-            case 37:
-            case 42:
-            case 58:
-            case 69:
-            case 74:
-            case 101:
-            case 133:
-            case 138:
-            case 149:
-            case 202:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
                 break;
 
-                //Straight, but right adjoining a neighor piece that might require an update
-            case 122:
-            case 234:
+            case 11:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
-
-                otherNeighbor = ComputeEmptyNeighborIndex(tile.x + 1, tile.y);
-                ProcessTile(new Vec2Int(tile.x + 1, tile.y), allowAnotherLevel);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
                 break;
 
-            //Straight, but left adjoining a neighor piece that might require an update
-            case 186:
-            case 218:
+            case 12:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
-
-                otherNeighbor = ComputeEmptyNeighborIndex(tile.x - 1, tile.y);
-                ProcessTile(new Vec2Int(tile.x - 1, tile.y), allowAnotherLevel);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
                 break;
 
-            //Straight, but top adjoining a neighor piece that might require an update
-            case 229:
-            case 213:
+            case 13:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
-
-                otherNeighbor = ComputeEmptyNeighborIndex(tile.x, tile.y + 1);
-                ProcessTile(new Vec2Int(tile.x, tile.y + 1), allowAnotherLevel);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
                 break;
 
-            //Straight, but bottom adjoining a neighor piece that might require an update
-            case 117:
-            case 181:
+            case 14:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
-
-                otherNeighbor = ComputeEmptyNeighborIndex(tile.x, tile.y - 1);
-                ProcessTile(new Vec2Int(tile.x, tile.y - 1), allowAnotherLevel);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
                 break;
-        }
-    }
 
-    private void ProcessTile(Vec2Int tilePos, int goDeeper)
-    {
-        if (goDeeper < 1)
-            return;
+            case 15:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
 
-        goDeeper--;
-
-        int tileIndex = ConvertTwoIntToInt(tilePos.x, tilePos.y);
-        int neighborIndex = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y);
-        int otherNeighbor = 0;
-
-        Debug.Log(string.Format("x {0} z {1}: neighborindex: {2}", tilePos.x, tilePos.y, neighborIndex));
-
-        switch (neighborIndex)
-        {
-            //3 Way
             case 16:
-            case 32:
-            case 64:
-            case 128:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
                 break;
 
-            //Straight wall, but also should update its neighbor to the left
             case 17:
-            case 132:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
-
-                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x + 1, tilePos.y);
-                //ProcessTile(new Vec2Int(tilePos.x + 1, tilePos.y), goDeeper);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
                 break;
 
-            //Straight wall, but also should update its neighbor to the right
-            case 33:
+            case 18: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 19:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 20:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 21:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 22:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 23:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 24:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 25: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 26:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 27:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 28:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 29: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 30: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 31: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 32: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 33: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 34: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 35:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 36: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 37: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 38:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 39:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 40: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 41: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 42: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                break;
+
+            case 43: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 44: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 45: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 46: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 47:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 48:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 49:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 50:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 51:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 52:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 53:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 54:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 55:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 56:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 57:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 58: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 59: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 60:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 61:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 62:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 63: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 64:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 65:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 66:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 67:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
             case 68:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
-
-                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x - 1, tilePos.y);
-                //ProcessTile(new Vec2Int(tilePos.x - 1, tilePos.y), goDeeper);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
                 break;
 
-                //Straight wall, but also should update its neighbor to top
-            case 24:
-            case 34:
+            case 69:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
 
-                //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y + 1);
-                //ProcessTile(new Vec2Int(tilePos.x, tilePos.y + 1), goDeeper);
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
                 break;
 
-            //Straight wall piece
-            case 49:
-            case 66:
-            case 98:            
-            case 136:
-            case 152:
-            case 196:
-            case 245:
-            case 250:
+            case 70:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
                 break;
 
-            //Corner wall piece
-            case 185:
-            case 230:
-            case 220:
+            case 71:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 72:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 73:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 74:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                break;
+
+            case 75:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 76:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 77:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 78:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 79:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 80:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 81:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 82:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 83:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 84:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 85:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 86:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 87:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 88:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 89:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 90:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 91:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 92:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 93:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 94:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 95:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 96:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 97:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 98:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 99:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 100:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 101:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 102:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 103:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 104:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 105: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 106: SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 107:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 108: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+                
+            case 109: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 110:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 111:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 112:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 113:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 114: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
             case 115:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Corner);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
                 break;
 
-            //4 way cross piece
-            case 255:
-            case 247:
-            case 251:
-            case 253:
-            case 254:
+            case 116:
                 SetTileToType(tileIndex, m_shortCut_wallIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Cross);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
                 break;
 
-            //3 Way
-            //case 33:
-            //case 68:
-            //    m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
-            //    UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
-            //    break;
+            case 117:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 118:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 119:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 120:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 121:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 122:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                break;
+
+            case 123: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 124:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 125: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 126: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 127:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 128:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 129: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 130: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 131:
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 132: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 133: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
+                break;
+
+            case 134: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 135: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 136: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 137: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 138: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 139: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 140: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 141: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 142: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 143: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross);                 
+                break;
+
+            case 144: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 145: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 146: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 147: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 148: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 149: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1), 1);
+                break;
+
+            case 150: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 151: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 152: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 153: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 154: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 155: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 156: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 157: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 158: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 159: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 160: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 161: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 162: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 163: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 164: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 165: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 166: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 167: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 168: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 169: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 170: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 171: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 172: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 173: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 174: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 175: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 176: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 177: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 178: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 179: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 180: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 181: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y - 1 ), 1);
+                break;
+
+            case 182: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 183: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 184: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 185: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 186: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 187: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 188: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 189: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 190: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 191: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 192: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 193: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 194: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 195: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 196: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 197: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 198: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 199: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 200: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 201: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 202: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 203: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 204: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 205: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 206: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 207: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 208: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                break;
+
+            case 209: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 210: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 211: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 212: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 213: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
+                break;
+
+            case 214: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 215: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 216: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 217: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 218: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x - 1, tile.y), 1);
+                break;
+
+            case 219: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 220: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 221: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 222: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 223: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 224: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 225: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 226: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 227: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 228: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 229: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x, tile.y + 1), 1);
+                break;
+
+            case 230: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 231: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 232: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 233: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 234: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight);
+
+                ProcessForWallTiles(new Vec2Int(tile.x + 1, tile.y), 1);
+                break;
+
+            case 235: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 236: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 237: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 238: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 239: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
+
+            case 240: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 241: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 242: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 243: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 244: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 245: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 246: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 247: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 248: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 249: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 250: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Straight); 
+                break;
+
+            case 251: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 252: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Corner); 
+                break;
+
+            case 253: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 254: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.ThreeWay); 
+                break;
+
+            case 255: 
+                SetTileToType(tileIndex, m_shortCut_wallIndex);
+                UpdateGraphicalTile(tileIndex, tile, neighborIndex, WallType.Cross); 
+                break;
 
             default:
-                //Place a basic ground tile
-                SetTileToType(tileIndex, m_shortCut_groundIndex);
-                UpdateGraphicalTile(tileIndex, tilePos, neighborIndex);
+                Debug.LogError(string.Format("Unhandled case {0}", neighborIndex));
                 break;
         }
+        #endregion
     }
+
+    //private void ProcessTile(Vec2Int tilePos, int goDeeper)
+    //{
+    //    if (goDeeper < 1)
+    //        return;
+
+    //    goDeeper--;
+
+    //    int tileIndex = ConvertTwoIntToInt(tilePos.x, tilePos.y);
+    //    int neighborIndex = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y);
+    //    int otherNeighbor = 0;
+
+    //    Debug.Log(string.Format("x {0} z {1}: neighborindex: {2}", tilePos.x, tilePos.y, neighborIndex));
+
+    //    switch (neighborIndex)
+    //    {
+    //        //3 Way
+    //        case 16:
+    //        case 32:
+    //        case 64:
+    //        case 128:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
+    //            break;
+
+    //        //Straight wall, but also should update its neighbor to the left
+    //        case 17:
+    //        case 132:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+    //            //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x + 1, tilePos.y);
+    //            //ProcessTile(new Vec2Int(tilePos.x + 1, tilePos.y), goDeeper);
+    //            break;
+
+    //        //Straight wall, but also should update its neighbor to the right
+    //        case 33:
+    //        case 68:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+    //            //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x - 1, tilePos.y);
+    //            //ProcessTile(new Vec2Int(tilePos.x - 1, tilePos.y), goDeeper);
+    //            break;
+
+    //            //Straight wall, but also should update its neighbor to top
+    //        case 24:
+    //        case 34:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+
+    //            //otherNeighbor = ComputeEmptyNeighborIndex(tilePos.x, tilePos.y + 1);
+    //            //ProcessTile(new Vec2Int(tilePos.x, tilePos.y + 1), goDeeper);
+    //            break;
+
+    //        //Straight wall piece
+    //        case 49:
+    //        case 66:
+    //        case 98:            
+    //        case 136:
+    //        case 152:
+    //        case 196:
+    //        case 245:
+    //        case 250:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Straight);
+    //            break;
+
+    //        //Corner wall piece
+    //        case 185:
+    //        case 230:
+    //        case 220:
+    //        case 115:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Corner);
+    //            break;
+
+    //        //4 way cross piece
+    //        case 255:
+    //        case 247:
+    //        case 251:
+    //        case 253:
+    //        case 254:
+    //            SetTileToType(tileIndex, m_shortCut_wallIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.Cross);
+    //            break;
+
+    //        //3 Way
+    //        //case 33:
+    //        //case 68:
+    //        //    m_groundTiles[tileIndex] = (ushort)GroundTileType.Wall;
+    //        //    UpdateGraphicalTile(tileIndex, tilePos, neighborIndex, WallType.ThreeWay);
+    //        //    break;
+
+    //        default:
+    //            //Place a basic ground tile
+    //            SetTileToType(tileIndex, m_shortCut_groundIndex);
+    //            UpdateGraphicalTile(tileIndex, tilePos, neighborIndex);
+    //            break;
+    //    }
+    //}
 
     public void SetHighlightTiles(Vector3 startPointWorld, Vector3 endPointWorld, WorldOrthoCamera.SelectionType selectType)
     {
@@ -826,14 +2085,27 @@ public class GroundManager : MonoBehaviour
             {
                 wallPiece = CacheManager.Singleton.RequestWallT();
 
+                if (neighborIndex == 13 || neighborIndex == 77) 
+                {
+                    rot = wallPiece.defaultOrientation + 270f;
+                }
+                else if (neighborIndex == 135 || neighborIndex == 7)
+                {
+                    rot = wallPiece.defaultOrientation + 90f;
+                }
+                else if (neighborIndex == 11)
+                {
+                    rot = wallPiece.defaultOrientation + 180f;
+                }
+
                 //if (neighborIndex == 32 || neighborIndex == 64)
                 //{
                 //    rot = wallPiece.defaultOrientation + 90f;
                 //}
-                /*else*/ if(neighborIndex == 16 || neighborIndex == 32)
-                {
-                    rot = wallPiece.defaultOrientation + 180f;
-                }
+                //else if(neighborIndex == 16 || neighborIndex == 32)
+                //{
+                //    rot = wallPiece.defaultOrientation + 180f;
+                //}
                 //else if (neighborIndex == 24 || neighborIndex == 32)
                 //{
                 //    rot = wallPiece.defaultOrientation + 180f;
@@ -845,7 +2117,7 @@ public class GroundManager : MonoBehaviour
 
                 //Horizontal
                 if (neighborIndex == 37 || neighborIndex == 149 || neighborIndex == 133 || neighborIndex == 21 || neighborIndex == 69 || neighborIndex == 5 || neighborIndex == 101
-                    || neighborIndex == 229 || neighborIndex == 213 || neighborIndex == 117 || neighborIndex == 181)
+                    || neighborIndex == 229 || neighborIndex == 213 || neighborIndex == 117 || neighborIndex == 181 || neighborIndex == 197)
                 {
                     //wallPiece.transform.rotation = Quaternion.Euler(0, wallPiece.defaultOrientation + 90f, 0f);
                     rot = wallPiece.defaultOrientation;
