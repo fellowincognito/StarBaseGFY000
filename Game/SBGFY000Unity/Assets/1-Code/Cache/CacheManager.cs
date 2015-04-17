@@ -41,6 +41,7 @@ public class CacheManager : MonoBehaviour
     WallCrossCache m_wallCrossCache;
     WallStraightCache m_wallStraightCache;
     WallTCache m_wallTCache;
+    InteriorDoorCache m_intDoorCache;
     #endregion
 
     public void Init()
@@ -63,6 +64,9 @@ public class CacheManager : MonoBehaviour
         m_wallTCache = new WallTCache();
         m_wallTCache.Init(32, (1f / 5f));
 
+        m_intDoorCache = new InteriorDoorCache();
+        m_intDoorCache.Init(16, (1f / 5f));
+
         this.enabled = true;
     }
 
@@ -74,6 +78,7 @@ public class CacheManager : MonoBehaviour
         m_wallCrossCache.Maintenance();
         m_wallStraightCache.Maintenance();
         m_wallTCache.Maintenance();
+        m_intDoorCache.Maintenance();
 
         if (m_updateTimer > Time.time)
             return;
@@ -90,6 +95,7 @@ public class CacheManager : MonoBehaviour
             m_wallCrossCache.Dispose();
             m_wallStraightCache.Dispose();
             m_wallTCache.Dispose();
+            m_intDoorCache.Dispose();
         }
         catch (System.Exception ex)
         {
@@ -195,6 +201,22 @@ public class CacheManager : MonoBehaviour
         wall.gameObject.SetActive(false);
 
         m_wallTCache.ReturnObject(wall);
+    }
+    #endregion
+
+    #region Interior Door Management
+    public DoorObject RequestInteriorDoor()
+    {
+        return m_intDoorCache.RequestObject();
+    }
+
+    public void ReturnInteriorDoor(DoorObject door)
+    {
+        door.SetTilePos(new Vec2Int(-1, -1));
+        door.gameObject.transform.parent = this.transform;
+        door.gameObject.SetActive(false);
+
+        m_intDoorCache.ReturnObject(door);
     }
     #endregion
 }

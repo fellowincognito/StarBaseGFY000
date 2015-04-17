@@ -33,6 +33,7 @@ public class WorldOrthoCamera : MonoBehaviour
 
     bool m_doDisplayDrag;
     bool m_doDisplaySelection;
+    bool m_doDisplayObject;
 
     bool m_followPlayer;
 
@@ -125,6 +126,8 @@ public class WorldOrthoCamera : MonoBehaviour
             selectType = SelectionType.Subtraction;
         }
 
+        m_doDisplayObject = false;
+
         if (Input.GetMouseButtonDown(0))
         {
             if (!m_doDisplayDrag)
@@ -133,12 +136,17 @@ public class WorldOrthoCamera : MonoBehaviour
                 m_startDragPos = WorldPointFromMouse();
             }
         }
+        else if (UIManager.Singleton.PendingCreationAction == UIManager.CreationAction.Object)
+        {
+            m_doDisplayObject = true;
+        }
 
         if (Input.GetMouseButtonUp(0))
         {
             if (m_doDisplayDrag)
             {
                 m_doDisplayDrag = false;
+                m_doDisplayObject = false;
                 m_doDisplaySelection = true;
                 m_startClickPos = m_startDragPos;
                 m_endClickPos = m_currentMousePos;
@@ -160,6 +168,12 @@ public class WorldOrthoCamera : MonoBehaviour
             {
                 GroundManager.Singleton.SetTempHighlight(m_startDragPos, m_currentMousePos);
             }
+        }
+
+        if (m_doDisplayObject)
+        {
+            m_currentMousePos = WorldPointFromMouse();
+            //GroundManager.Singleton.ShowTempObject(UIManager.Singleton.PendingObjectType, m_currentMousePos);
         }
 
         Vec2Int mousePosTile = GroundManager.Singleton.ConvertWorldPositionToTile(m_currentMousePos);

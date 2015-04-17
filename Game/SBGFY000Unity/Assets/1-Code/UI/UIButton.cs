@@ -28,6 +28,8 @@ public class UIButton : MonoBehaviour
         CreateFloorButton,
         CreateObjectButton,
         CreateDemolishButton,
+
+        CreateDoorButton,
     }
 
     public enum ToggleType

@@ -98,7 +98,7 @@ public class PlayerCharacter : MonoBehaviour
 
             Vec2Int tilePos = GroundManager.Singleton.ConvertWorldPositionToTile(aimPos);
 
-            GroundManager.GroundTileType tileType = GroundManager.Singleton.GetTileType(tilePos);
+            GroundManager.GroundTileType tileType = GroundManager.Singleton.ClientData.GetTileType(tilePos);
 
             Debug.Log(string.Format("Tile pos {0} type {1}", tilePos, tileType));
 

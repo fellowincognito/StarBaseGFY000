@@ -47,18 +47,40 @@ public class UIManager : MonoBehaviour
         Object,
         Demolish
     }
+
+    public enum UIObjectType
+    {
+        None,
+        Door
+    }
     #endregion
 
     public Canvas UICanvasRoot;
     public GameObject UIAdministratorPanel;
     public GameObject UIBuildPanel;
     public GameObject UIConfirmationPanel;
+    public GameObject UIObjectPanel; 
 
     public Text UIMousePos;
 
     [SerializeField]
     protected bool m_isInBuildingMode;
+    [SerializeField]
     protected CreationAction m_currentPendingCreationAction;
+    [SerializeField]
+    protected UIObjectType m_currentPendingObjectType;
+
+    #region Gets/Sets
+    public CreationAction PendingCreationAction
+    {
+        get { return m_currentPendingCreationAction; }
+    }
+
+    public UIObjectType PendingObjectType
+    {
+        get { return m_currentPendingObjectType; }
+    }
+    #endregion
 
     public void Init()
     {
@@ -103,6 +125,10 @@ public class UIManager : MonoBehaviour
                 success = ButtonWallAction();
                 break;
 
+            case UIButton.ButtonType.CreateDoorButton:
+                success = ButtonDoorAction();
+                break;
+
             default:
                 Debug.LogError("Unrecognized button type " + buttonType.ToString());
                 break;
@@ -120,7 +146,7 @@ public class UIManager : MonoBehaviour
     {
         if (m_currentPendingCreationAction == CreationAction.Room)
         {
-            GroundManager.Singleton.SetTiles(GroundManager.GroundTileType.TempRoom);
+            //GroundManager.Singleton.SetTiles(GroundManager.GroundTileType.TempRoom);
         }
 
         GroundManager.Singleton.ClearSelection();
@@ -204,6 +230,12 @@ public class UIManager : MonoBehaviour
     /// <returns>TRUE if the button action is successful, FALSE if there's any obstacle/failure</returns>
     protected bool ButtonObjectAction()
     {
+        //Turn off the UIBuildPanel gameObject
+        UIBuildPanel.SetActive(false);
+        //Make sure the UIConfirmationPanel is off
+        UIConfirmationPanel.SetActive(false);
+        //Turn on the Object Panel
+        UIObjectPanel.SetActive(true);
         return true;
     }
 
@@ -234,9 +266,26 @@ public class UIManager : MonoBehaviour
         return true;
     }
 
+    protected bool ButtonDoorAction()
+    {
+        //There's another pending action, so we should probably clean it up first
+        if (m_currentPendingCreationAction != CreationAction.None)
+        {
+            CleanUpPendingAction();
+        }
+
+        CameraManager.Singleton.selectionMode = CameraManager.CameraSelectionMode.Tiles;
+
+        m_currentPendingCreationAction = CreationAction.Object;
+        m_currentPendingObjectType = UIObjectType.Door;
+
+        return true;
+    }
+
     public void CleanUpPendingAction()
     {
         CameraManager.Singleton.selectionMode = CameraManager.CameraSelectionMode.None;
+        m_currentPendingObjectType = UIObjectType.None;
     }
     #endregion
 
@@ -249,21 +298,21 @@ public class UIManager : MonoBehaviour
     {
         if (m_currentPendingCreationAction != CreationAction.None)
         {
-            if (GroundManager.Singleton.SelectedWidthHeight.x != 0 && GroundManager.Singleton.SelectedWidthHeight.y != 0)
-            {
-                //The selected width/height is not 0, so we should show the confirmation panel
-                if (!UIConfirmationPanel.activeSelf)
-                {
-                    UIConfirmationPanel.SetActive(true);
-                }
-            }
-            else //No tiles/objects have been selected, so 
-            {
-                if (UIConfirmationPanel.activeSelf)
-                {
-                    UIConfirmationPanel.SetActive(false);
-                }
-            }
+            //if (GroundManager.Singleton.SelectedWidthHeight.x != 0 && GroundManager.Singleton.SelectedWidthHeight.y != 0)
+            //{
+            //    //The selected width/height is not 0, so we should show the confirmation panel
+            //    if (!UIConfirmationPanel.activeSelf)
+            //    {
+            //        UIConfirmationPanel.SetActive(true);
+            //    }
+            //}
+            //else //No tiles/objects have been selected, so 
+            //{
+            //    if (UIConfirmationPanel.activeSelf)
+            //    {
+            //        UIConfirmationPanel.SetActive(false);
+            //    }
+            //}
         }
     }
 }

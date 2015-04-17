@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
     void Init()
     {
         CacheManager.Singleton.Init();
-        GroundManager.Singleton.Init(playableSize);
+        GroundManager.Singleton.Init(playableSize, true, true);
         UIManager.Singleton.Init();
         CameraManager.Singleton.Init();
 
