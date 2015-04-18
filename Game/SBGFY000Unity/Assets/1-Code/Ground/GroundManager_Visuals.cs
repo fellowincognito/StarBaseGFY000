@@ -33,15 +33,17 @@ public class GroundManager_Visuals : MonoBehaviour
     List<HologramObject> m_selectedHolograms;
     List<Vec2Int> m_tempSelectedTiles;
     List<Vec2Int> m_selectedTiles;
+
+    protected BaseGroundObject m_objectHologram;
     #endregion
 
     #region Gets/Sets
-    public Vec2Int SelectedOrigin
+    public Vec2Int HighlightedOrigin
     {
         get { return m_highLightStartPoint; }
     }
 
-    public Vec2Int SelectedWidthHeight
+    public Vec2Int HighlightedWidthHeight
     {
         get { return m_highLightWidthHeight; }
     }
@@ -54,6 +56,21 @@ public class GroundManager_Visuals : MonoBehaviour
     public Vec2Int CurrentHighlightWidthHeight
     {
         get { return m_tempLightWidthHeight; }
+    }
+
+    public List<Vec2Int> SelectedTiles
+    {
+        get { return m_selectedTiles; }
+    }
+
+    public BaseGroundObject GetTileGO(int index)
+    {
+        if (index < 0 || index > m_groundTilesGOs.Length - 1)
+        {
+            return null;
+        }
+
+        return m_groundTilesGOs[index];
     }
 
     public void SetTileGO(int index, BaseGroundObject newObject)
@@ -280,8 +297,6 @@ public class GroundManager_Visuals : MonoBehaviour
         }
     }
 
-
-    protected BaseGroundObject m_objectHologram;
     public void ShowTempObject(UIManager.UIObjectType objectTypeToDisplay, Vector3 position)
     {
         //If no hologram, grab one
@@ -435,6 +450,13 @@ public class GroundManager_Visuals : MonoBehaviour
             BuildTempHolograms();
         }
     }
+
+    #region Assembly
+    public void AssembleTile(int tileIndex)
+    {
+        m_groundTilesGOs[tileIndex].BuildObject();
+    }
+    #endregion
 
     #region Debug/Editor
     void OnDrawGizmos()

@@ -146,7 +146,7 @@ public class UIManager : MonoBehaviour
     {
         if (m_currentPendingCreationAction == CreationAction.Room)
         {
-            //GroundManager.Singleton.SetTiles(GroundManager.GroundTileType.TempRoom);
+            GroundManager.Singleton.Client_Submit_SetTiles(GroundManager.GroundTileType.TempRoom);
         }
 
         GroundManager.Singleton.ClearSelection();
@@ -298,21 +298,21 @@ public class UIManager : MonoBehaviour
     {
         if (m_currentPendingCreationAction != CreationAction.None)
         {
-            //if (GroundManager.Singleton.SelectedWidthHeight.x != 0 && GroundManager.Singleton.SelectedWidthHeight.y != 0)
-            //{
-            //    //The selected width/height is not 0, so we should show the confirmation panel
-            //    if (!UIConfirmationPanel.activeSelf)
-            //    {
-            //        UIConfirmationPanel.SetActive(true);
-            //    }
-            //}
-            //else //No tiles/objects have been selected, so 
-            //{
-            //    if (UIConfirmationPanel.activeSelf)
-            //    {
-            //        UIConfirmationPanel.SetActive(false);
-            //    }
-            //}
+            if (GroundManager.Singleton.ClientData.Visuals.HighlightedWidthHeight.x != 0 && GroundManager.Singleton.ClientData.Visuals.HighlightedWidthHeight.y != 0)
+            {
+                //The selected width/height is not 0, so we should show the confirmation panel
+                if (!UIConfirmationPanel.activeSelf)
+                {
+                    UIConfirmationPanel.SetActive(true);
+                }
+            }
+            else //No tiles/objects have been selected, so 
+            {
+                if (UIConfirmationPanel.activeSelf)
+                {
+                    UIConfirmationPanel.SetActive(false);
+                }
+            }
         }
     }
 }

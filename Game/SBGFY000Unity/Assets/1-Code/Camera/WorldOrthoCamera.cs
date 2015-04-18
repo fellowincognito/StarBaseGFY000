@@ -173,7 +173,7 @@ public class WorldOrthoCamera : MonoBehaviour
         if (m_doDisplayObject)
         {
             m_currentMousePos = WorldPointFromMouse();
-            //GroundManager.Singleton.ShowTempObject(UIManager.Singleton.PendingObjectType, m_currentMousePos);
+            GroundManager.Singleton.ClientData.Visuals.ShowTempObject(UIManager.Singleton.PendingObjectType, m_currentMousePos);
         }
 
         Vec2Int mousePosTile = GroundManager.Singleton.ConvertWorldPositionToTile(m_currentMousePos);

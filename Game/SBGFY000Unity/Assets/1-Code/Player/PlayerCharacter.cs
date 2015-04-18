@@ -102,7 +102,7 @@ public class PlayerCharacter : MonoBehaviour
 
             Debug.Log(string.Format("Tile pos {0} type {1}", tilePos, tileType));
 
-            GroundManager.Singleton.AttemptBuildTile(this, tilePos, aimPos);
+            GroundManager.Singleton.Client_AttemptBuildTile(this, tilePos, aimPos);
         }
     }
 }

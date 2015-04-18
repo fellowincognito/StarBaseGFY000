@@ -113,6 +113,16 @@ public class GroundManager : MonoBehaviour
             return (GroundTileType)m_groundTiles[index];
         }
 
+        public GroundTileType GetTileType(int index)
+        {
+            if (index < 0 || index > m_groundTiles.Length)
+            {
+                return GroundTileType.None;
+            }
+
+            return (GroundTileType)m_groundTiles[index];
+        }
+
         public int ConvertVec2IntToInt(Vec2Int position)
         {
             return (position.x * m_groundTileDim.x) + position.y;
@@ -121,6 +131,15 @@ public class GroundManager : MonoBehaviour
         public int ConvertTwoIntToInt(int x, int z)
         {
             return (x * m_groundTileDim.x) + z;
+        }
+
+        public Vec2Int ConvertIndexToTile(int tileIndex)
+        {
+            Vec2Int tile = new Vec2Int();
+            tile.x = (int)(tileIndex / m_groundTileDim.x);
+            tile.y = tileIndex - (tile.x * m_groundTileDim.x);
+
+            return tile;
         }
 
         public void SetTileToType(int index, ushort value)
@@ -227,13 +246,14 @@ public class GroundManager : MonoBehaviour
         }
         #endregion
 
-        public GroundData(Vec2Int dim, GroundManager parent, bool isClient)
+        public GroundData(Vec2Int dim, GroundManager parent, bool isServer)
         {
             m_groundTileDim = dim;
             m_parent = parent;
             m_groundTiles = new ushort[m_groundTileDim.x * m_groundTileDim.y];
+            m_isServer = isServer;
 
-            if (isClient)
+            if (!isServer)
             {
                 m_visualComponent = m_parent.gameObject.AddComponent<GroundManager_Visuals>();
                 m_visualComponent.Init(m_groundTileDim, this);
@@ -242,63 +262,80 @@ public class GroundManager : MonoBehaviour
 
 
         #region Data Manipulation
-        public void SetTiles(GroundTileType tileType, List<Vec2Int> tilesToSet)
+        //public void SetTiles(GroundTileType tileType, List<Vec2Int> tilesToSet)
+        //{
+        //    //If we're a client
+        //    if (!IsServer)
+        //    {
+        //        //Clear existing highlights
+        //        m_visualComponent.ReturnSelectedHolograms();
+        //        m_visualComponent.ReturnTempHolograms();
+        //    }
+        //    else
+        //    {
+
+        //    }
+
+        //    List<Vec2Int> modifiedIndices = new List<Vec2Int>();
+
+        //    for (int i = 0; i < tilesToSet.Count; i++)
+        //    {
+        //        int index = ConvertTwoIntToInt(tilesToSet[i].x, tilesToSet[i].y);
+
+        //        GroundTileType curTileTypeAtPos = GetTileType(tilesToSet[i].x, tilesToSet[i].y);
+
+        //        if (curTileTypeAtPos != GroundTileType.None)
+        //        {
+        //            Debug.Log(string.Format("Tile at {0},{1} is already {2}, not changing to {3}", tilesToSet[i].x, tilesToSet[i].y, curTileTypeAtPos, tileType));
+        //            continue;
+        //        }
+
+        //        SetTileToType(index, (ushort)tileType);
+        //        modifiedIndices.Add(new Vec2Int(tilesToSet[i].x, tilesToSet[i].y));
+        //    }
+
+        //    //Now that the tiles have been assigned, should check if its a TempRoom, and if so, we need to do further checking (for assigning walls and shit)
+        //    if (tileType == GroundTileType.TempRoom)
+        //    {
+        //        //First go through and figure out which should be just floor tiles. Floor tiles will be ones with a neighbor on all sides (value of 255)
+        //        //Start at the end and work towards start so we won't skip tiles due to removed indices shifting things about
+        //        for (int i = modifiedIndices.Count - 1; i > -1; i--)
+        //        {
+        //            ProcessForFloorTiles(ref modifiedIndices, i);
+        //        }
+
+        //        //All ground tiles should have been removed from ProcessForFloorTiles, so modifiedIndices should only retain wall tiles. Now we need to figure out what specific tiles they are
+        //        for (int i = 0; i < modifiedIndices.Count; i++)
+        //        {
+        //            ProcessForWallTiles(modifiedIndices[i], 1);
+        //        }
+        //    }
+        //}
+
+        public void ProcessForFloorTiles(ref List<int> approvedTiles)
         {
-            //If we're a client
-            if (!IsServer)
+            for (int i = approvedTiles.Count - 1; i > -1; i--)
             {
-                //Clear existing highlights
-                m_visualComponent.ReturnSelectedHolograms();
-                m_visualComponent.ReturnTempHolograms();
-            }
-            else
-            {
-
-            }
-
-            List<Vec2Int> modifiedIndices = new List<Vec2Int>();
-
-            for (int i = 0; i < tilesToSet.Count; i++)
-            {
-                int index = ConvertTwoIntToInt(tilesToSet[i].x, tilesToSet[i].y);
-
-                GroundTileType curTileTypeAtPos = GetTileType(tilesToSet[i].x, tilesToSet[i].y);
-
-                if (curTileTypeAtPos != GroundTileType.None)
-                {
-                    Debug.Log(string.Format("Tile at {0},{1} is already {2}, not changing to {3}", tilesToSet[i].x, tilesToSet[i].y, curTileTypeAtPos, tileType));
-                    continue;
-                }
-
-                SetTileToType(index, (ushort)tileType);
-                modifiedIndices.Add(new Vec2Int(tilesToSet[i].x, tilesToSet[i].y));
-            }
-
-            //Now that the tiles have been assigned, should check if its a TempRoom, and if so, we need to do further checking (for assigning walls and shit)
-            if (tileType == GroundTileType.TempRoom)
-            {
-                //First go through and figure out which should be just floor tiles. Floor tiles will be ones with a neighbor on all sides (value of 255)
-                //Start at the end and work towards start so we won't skip tiles due to removed indices shifting things about
-                for (int i = modifiedIndices.Count - 1; i > -1; i--)
-                {
-                    ProcessForFloorTiles(ref modifiedIndices, i);
-                }
-
-                //All ground tiles should have been removed from ProcessForFloorTiles, so modifiedIndices should only retain wall tiles. Now we need to figure out what specific tiles they are
-                for (int i = 0; i < modifiedIndices.Count; i++)
-                {
-                    ProcessForWallTiles(modifiedIndices[i], 1);
-                }
+                ProcessForFloorTiles(ref approvedTiles, i);
             }
         }
 
-        private void ProcessForFloorTiles(ref List<Vec2Int> suspectTiles, int listIndex)
+        //private void ProcessForFloorTiles(ref List<Vec2Int> suspectTiles, int listIndex)
+        private void ProcessForFloorTiles(ref List<int> suspectTiles, int listIndex)
         {
-            Vec2Int tile = suspectTiles[listIndex];
-            int tileIndex = ConvertVec2IntToInt(tile);
+            int tileIndex = suspectTiles[listIndex];
+            Vec2Int tile = ConvertIndexToTile(tileIndex);
+            
             int neighborIndex = ComputeEmptyNeighborIndex(tile.x, tile.y);
 
-            Debug.Log("Floor " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
+            if (IsServer)
+            {
+                Debug.Log(string.Format("Server Floor {0}, {1} neighbor {2}", tile.x, tile.y, neighborIndex));
+            }
+            else
+            {
+                Debug.Log(string.Format("Client Floor {0}, {1} neighbor {2}", tile.x, tile.y, neighborIndex));
+            }
 
             bool isEdge = false;
 
@@ -336,6 +373,15 @@ public class GroundManager : MonoBehaviour
             m_visualComponent.UpdateGraphicalTile(tileIndex, tile, neighborIndex, wallType);
         }
 
+        public void ProcessForWallTiles(List<int> approvedTiles)
+        {
+            for (int i = 0; i < approvedTiles.Count; i++)
+            {
+                Vec2Int tile = ConvertIndexToTile(approvedTiles[i]);
+                ProcessForWallTiles(tile, 1);
+            }
+        }
+
         private void ProcessForWallTiles(Vec2Int tile, int allowAnotherLevel)
         {
             if (allowAnotherLevel < 0)
@@ -347,7 +393,7 @@ public class GroundManager : MonoBehaviour
             int neighborIndex = ComputeWallNeighborIndex(tile.x, tile.y);
             //int otherNeighbor = 0;
 
-            Debug.Log("Wall " + tile.x + ", " + tile.y + " neighbor " + neighborIndex);
+            //Debug.Log(string.Format("Wall {0},{1} neighbor {2}", tile.x, tile.y, neighborIndex));
 
             #region Large Switch for all neighbor conditions
             switch (neighborIndex)
@@ -1750,12 +1796,12 @@ public class GroundManager : MonoBehaviour
 
         if (isServer)
         {
-            m_serverData = new GroundData(tileDim, this, false);
+            m_serverData = new GroundData(tileDim, this, true);
         }
 
         if (isClient)
         {
-            m_clientData = new GroundData(tileDim, this, true);
+            m_clientData = new GroundData(tileDim, this, false);
         }
     }
 
@@ -1811,15 +1857,15 @@ public class GroundManager : MonoBehaviour
         //    }
         //}
 
-        if (m_serverData != null)
-        {
-            m_serverData.SetTiles(tileType, tilesToSet);
-        }
+        //if (m_serverData != null)
+        //{
+        //    m_serverData.SetTiles(tileType, tilesToSet);
+        //}
 
-        if (m_clientData != null)
-        {
-            m_clientData.SetTiles(tileType, tilesToSet);
-        }
+        //if (m_clientData != null)
+        //{
+        //    m_clientData.SetTiles(tileType, tilesToSet);
+        //}
         
     }
 
@@ -3610,102 +3656,124 @@ public class GroundManager : MonoBehaviour
     //}
     #endregion
 
-    #region Gizmos/Debug
-    
+    #region Server
+    /// <summary>
+    /// The station administrator has submitted these tiles as to be built into a room
+    /// </summary>
+    /// <param name="tileIndices"></param>
+    public void Server_ReceiveBuildRoomTiles(int[] tileIndices)
+    {
+        List<int> approvedTiles = new List<int>();
+        for (int i = 0; i < tileIndices.Length; i++)
+        {
+            Vec2Int tile = ServerData.ConvertIndexToTile(tileIndices[i]);
 
-    //void OnDrawGizmos()
-    //{
-    //    if (m_doHighlight)
-    //    {
-    //        Vector3 point1b = new Vector3(
-    //            m_highLightStartPoint.x,
-    //            0,
-    //            m_highLightStartPoint.y);
+            GroundTileType curTileTypeAtPos = ServerData.GetTileType(tileIndices[i]);
 
-    //        Vector3 point2b = new Vector3(
-    //            m_highLightStartPoint.x + m_highLightWidthHeight.x,
-    //            0,
-    //            m_highLightStartPoint.y);
+            if (curTileTypeAtPos != GroundTileType.None)
+            {
+                Debug.Log(string.Format("Tile at {0},{1} is already {2}, not changing to ROOM", tile.x, tile.y, curTileTypeAtPos));
+                continue;
+            }
 
-    //        Vector3 point3b = new Vector3(
-    //            m_highLightStartPoint.x + m_highLightWidthHeight.x,
-    //            0,
-    //            m_highLightStartPoint.y + m_highLightWidthHeight.y);
+            //Set the tile
+            ServerData.SetTileToType(tileIndices[i], (ushort)GroundTileType.TempRoom);
+            //Add it to the approved list, this will then get modified further and broadcasted to the players
+            approvedTiles.Add(tileIndices[i]);
+        }
 
-    //        Vector3 point4b = new Vector3(
-    //            m_highLightStartPoint.x,
-    //            0,
-    //            m_highLightStartPoint.y + m_highLightWidthHeight.y);
+        //Send back to players
+        TempNetworkPlaceHolder.Singleton.Server_SendBuildRoomTiles(approvedTiles.ToArray());
 
-    //        Debug.DrawLine(point1b, point2b, Color.red);
-    //        Debug.DrawLine(point2b, point3b, Color.red);
-    //        Debug.DrawLine(point3b, point4b, Color.red);
-    //        Debug.DrawLine(point4b, point1b, Color.red);
-    //    }
+        //Now that all the tiles have been assigned a temp room (by definition since its the point of this method), figure out which should be floor and which should be walls
+        ServerData.ProcessForFloorTiles(ref approvedTiles);
+        ServerData.ProcessForWallTiles(approvedTiles);
+    }
 
-    //    if (m_doTempHighLight)
-    //    {
-    //        Vector3 point1b = new Vector3(
-    //            m_tempLightStartPoint.x,
-    //            0,
-    //            m_tempLightStartPoint.y);
+    /// <summary>
+    /// A player has submitted this tile as to be assembled (turned from hologram to solid object)
+    /// </summary>
+    /// <param name="tileIndex"></param>
+    public void Server_ReceiveAssembleTile(int tileIndex)
+    {
+        //Check if there's a tile there
+        GroundTileType tileType = ServerData.GetTileType(tileIndex);
 
-    //        Vector3 point2b = new Vector3(
-    //            m_tempLightStartPoint.x + m_tempLightWidthHeight.x,
-    //            0,
-    //            m_tempLightStartPoint.y);
+        if (tileType == GroundTileType.None)
+        {
+            Debug.LogError(string.Format("A player is trying to assemble tile index {0} but nothing is there.", tileIndex));
+            return;
+        }
 
-    //        Vector3 point3b = new Vector3(
-    //            m_tempLightStartPoint.x + m_tempLightWidthHeight.x,
-    //            0,
-    //            m_tempLightStartPoint.y + m_tempLightWidthHeight.y);
-
-    //        Vector3 point4b = new Vector3(
-    //            m_tempLightStartPoint.x,
-    //            0,
-    //            m_tempLightStartPoint.y + m_tempLightWidthHeight.y);
-
-    //        Debug.DrawLine(point1b, point2b, Color.yellow);
-    //        Debug.DrawLine(point2b, point3b, Color.yellow);
-    //        Debug.DrawLine(point3b, point4b, Color.yellow);
-    //        Debug.DrawLine(point4b, point1b, Color.yellow);
-    //    }
-
-    //    if (m_groundTiles != null)
-    //    {
-    //        Debug.DrawLine(new Vector3(0, 0f, 0), new Vector3(0, 0f, m_groundTileDim.y), Color.magenta);
-    //        Debug.DrawLine(new Vector3(0, 0f, m_groundTileDim.y), new Vector3(m_groundTileDim.x, 0f, m_groundTileDim.y), Color.magenta);
-    //        Debug.DrawLine(new Vector3(m_groundTileDim.x, 0f, m_groundTileDim.y), new Vector3(m_groundTileDim.x, 0f, 0), Color.magenta);
-    //        Debug.DrawLine(new Vector3(m_groundTileDim.x, 0f, 0), new Vector3(0, 0f, 0), Color.magenta);
-    //    }
-    //}
+        //Send to players
+        TempNetworkPlaceHolder.Singleton.Server_SendAssembleTile(tileIndex);
+    }
     #endregion
 
-    public void AttemptBuildTile(PlayerCharacter pc, Vec2Int tilePos, Vector3 clickPosition)
+    #region Client
+    public void Client_AttemptBuildTile(PlayerCharacter pc, Vec2Int tilePos, Vector3 clickPosition)
     {
-        //float dist = Vector3.SqrMagnitude(clickPosition - pc.transform.position);
-        //float testDist = 3f * 3f;
+        float dist = Vector3.SqrMagnitude(clickPosition - pc.transform.position);
+        float testDist = 3f * 3f;
 
-        //int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
+        int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
 
-        //if (index < 0 || index > m_groundTiles.Length)
-        //{
-        //    return;
-        //}
+        if (index < 0 || index > ClientData.m_groundTiles.Length)
+        {
+            return;
+        }
 
-        //GroundManager.GroundTileType tileType = (GroundManager.GroundTileType)m_groundTiles[index];
+        GroundManager.GroundTileType tileType = (GroundManager.GroundTileType)ClientData.m_groundTiles[index];
 
-        //if (dist < testDist + 0.00001f && tileType != GroundTileType.None)
-        //{
-        //    //SetTileToType(index, m_shortCut_groundIndex);
-        //    //m_groundTilesGOs[index].renderer.material = DefaultFilesManager.Singleton.builtTile;
+        if (dist < testDist + 0.00001f && tileType != GroundTileType.None)
+        {
+            //SetTileToType(index, m_shortCut_groundIndex);
+            //m_groundTilesGOs[index].renderer.material = DefaultFilesManager.Singleton.builtTile;
 
-        //    if (m_groundTilesGOs[index] == null)
-        //    {
-        //        Debug.LogError("Error");
-        //    }
+            if (ClientData.Visuals.GetTileGO(index) == null)
+            {
+                Debug.LogError("Error");
+            }
 
-        //    m_groundTilesGOs[index].BuildObject();
-        //}
+            TempNetworkPlaceHolder.Singleton.Client_SendAssembleTile(index);
+            //m_groundTilesGOs[index].BuildObject();
+        }
     }
+
+    public void Client_Submit_SetTiles(GroundTileType tileType)
+    {
+        List<int> modifiedIndices = new List<int>();
+
+        //Compile a list of the selected tiles as int indices for sending to the server
+        for (int i = 0; i < ClientData.Visuals.SelectedTiles.Count; i++)
+        {
+            int index = ClientData.ConvertTwoIntToInt(ClientData.Visuals.SelectedTiles[i].x, ClientData.Visuals.SelectedTiles[i].y);
+
+            modifiedIndices.Add(index);
+        }
+
+        TempNetworkPlaceHolder.Singleton.Client_SendBuildRoomTiles(modifiedIndices.ToArray());
+    }
+
+    public void Client_ReceiveBuildRoomTiles(int[] approvedTiles)
+    {
+        //Unlike the server (which is authoritarian and double checks everything) client just places ground type of "TempRoom" at every index, then goes through and tries to determine
+        //if it should be wall or floor based on neighbor tiles
+        for (int i = 0; i < approvedTiles.Length; i++)
+        {
+            //Set the tile
+            ClientData.SetTileToType(approvedTiles[i], (ushort)GroundTileType.TempRoom);
+        }
+
+        List<int> tempTiles = new List<int>(approvedTiles);
+        //Now figure out what should be floor and what is walls, and this will update the visuals too!
+        ClientData.ProcessForFloorTiles(ref tempTiles);
+        ClientData.ProcessForWallTiles(tempTiles);
+    }
+
+    public void Client_ReceiveTileAssemble(int tileIndex)
+    {
+        ClientData.Visuals.AssembleTile(tileIndex);
+    }
+    #endregion
 }
