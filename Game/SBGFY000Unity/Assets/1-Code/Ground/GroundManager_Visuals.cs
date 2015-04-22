@@ -35,6 +35,8 @@ public class GroundManager_Visuals : MonoBehaviour
     List<Vec2Int> m_selectedTiles;
 
     protected BaseGroundObject m_objectHologram;
+
+    protected bool m_hologramObjectLocationValid;
     #endregion
 
     #region Gets/Sets
@@ -61,6 +63,16 @@ public class GroundManager_Visuals : MonoBehaviour
     public List<Vec2Int> SelectedTiles
     {
         get { return m_selectedTiles; }
+    }
+
+    public BaseGroundObject HologramObject
+    {
+        get { return m_objectHologram; }
+    }
+
+    public bool CanPlaceHologram
+    {
+        get { return m_hologramObjectLocationValid; }
     }
 
     public BaseGroundObject GetTileGO(int index)
@@ -305,11 +317,57 @@ public class GroundManager_Visuals : MonoBehaviour
             m_objectHologram = CacheManager.Singleton.RequestInteriorDoor();
             m_objectHologram.gameObject.SetActive(true);
             m_objectHologram.transform.parent = null;
+
+            m_objectHologram.SetMaterial(PrefabAssets.Singleton.doorHologramMat);
+
+            switch (objectTypeToDisplay)
+            {
+                case UIManager.UIObjectType.Door:
+                    m_objectHologram.tileType = GroundManager.GroundTileType.Door;
+                    break;
+            }
         }
+
+        m_hologramObjectLocationValid = false;
 
         Vec2Int tilePos = GroundManager.Singleton.ConvertWorldPositionToTile(position);
 
         m_objectHologram.transform.position = new Vector3(tilePos.x + m_objectHologram.defaultOffset.x, 0, tilePos.y + m_objectHologram.defaultOffset.z);
+
+        Color holoColor = PrefabAssets.Singleton.hologramColor;
+
+        GroundManager.GroundTileType curTile = m_associatedGroundData.GetTileType(tilePos);
+
+        if (m_objectHologram.tileType == GroundManager.GroundTileType.Door)
+        {
+            if (curTile == GroundManager.GroundTileType.Wall)
+            {
+                int index = m_associatedGroundData.ConvertVec2IntToInt(tilePos);
+                BaseGroundObject baseObj = m_groundTilesGOs[index];
+
+                if (baseObj is WallObject)
+                {
+                    GroundManager.WallType wallType = (baseObj as WallObject).WallType;
+
+                    //Doors can only go on straight walls
+                    if (wallType == GroundManager.WallType.Straight)
+                    {
+                        m_objectHologram.transform.rotation = baseObj.transform.rotation;
+                        m_hologramObjectLocationValid = true;
+                    }
+                    else
+                    {
+                        holoColor = PrefabAssets.Singleton.hologramColorError;
+                    }
+                }
+            }
+            else
+            {
+                holoColor = PrefabAssets.Singleton.hologramColorError;
+            }
+        }
+
+        m_objectHologram.SetMaterialColor(holoColor);
     }
     #endregion
 

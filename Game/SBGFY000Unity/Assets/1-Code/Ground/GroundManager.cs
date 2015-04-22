@@ -93,7 +93,7 @@ public class GroundManager : MonoBehaviour
         {
             int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
 
-            if (index < 0 || index > m_groundTiles.Length)
+            if (index < 0 || index > m_groundTiles.Length - 1)
             {
                 return GroundTileType.None;
             }
@@ -105,7 +105,7 @@ public class GroundManager : MonoBehaviour
         {
             int index = (x * m_groundTileDim.x) + z;
 
-            if (index < 0 || index > m_groundTiles.Length)
+            if (index < 0 || index > m_groundTiles.Length - 1)
             {
                 return GroundTileType.None;
             }
@@ -115,7 +115,7 @@ public class GroundManager : MonoBehaviour
 
         public GroundTileType GetTileType(int index)
         {
-            if (index < 0 || index > m_groundTiles.Length)
+            if (index < 0 || index > m_groundTiles.Length - 1)
             {
                 return GroundTileType.None;
             }
@@ -3718,7 +3718,7 @@ public class GroundManager : MonoBehaviour
 
         int index = (tilePos.x * m_groundTileDim.x) + tilePos.y;
 
-        if (index < 0 || index > ClientData.m_groundTiles.Length)
+        if (index < 0 || index > ClientData.m_groundTiles.Length - 1)
         {
             return;
         }
@@ -3738,6 +3738,15 @@ public class GroundManager : MonoBehaviour
             TempNetworkPlaceHolder.Singleton.Client_SendAssembleTile(index);
             //m_groundTilesGOs[index].BuildObject();
         }
+    }
+
+    public void Client_AttemptPlaceObject()
+    {
+        if (m_clientData.Visuals.CanPlaceHologram)
+        {
+            TempNetworkPlaceHolder.Singleton.Client_SendObjectPlacement(m_clientData.Visuals.HologramObject.tileType);
+        }
+        //m_clientData.Visuals.HologramObject;
     }
 
     public void Client_Submit_SetTiles(GroundTileType tileType)

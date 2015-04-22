@@ -43,6 +43,10 @@ public class BaseGroundObject : MonoBehaviour
         
     }
 
+    public virtual void SetMaterialColor(Color color)
+    {
+    }
+
     public virtual void ToggleCollider(bool enableCollider)
     {
         if (theCollider != null)

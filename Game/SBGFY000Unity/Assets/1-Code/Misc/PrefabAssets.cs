@@ -28,6 +28,10 @@ public class PrefabAssets : MonoBehaviour
     }
     #endregion
 
+    //Colors
+    public Color hologramColor;
+    public Color hologramColorError;
+
     //Game Objects
     public GameObject tileObject;
 
@@ -49,4 +53,6 @@ public class PrefabAssets : MonoBehaviour
     public Material groundGray;
     public Material wallMatGray;
     public Material wallHologramMat;
+    public Material doorMatGray;
+    public Material doorHologramMat; 
 }

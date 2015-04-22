@@ -42,6 +42,14 @@ public class WallObject : BaseGroundObject
         topArt.renderer.material = mat;
     }
 
+    public override void SetMaterialColor(Color color)
+    {
+        base.SetMaterialColor(color);
+
+        bottomArt.renderer.material.SetColor("_Color", color);
+        topArt.renderer.material.SetColor("_Color", color);
+    }
+
     public void SetWallType(GroundManager.WallType wallType)
     {
         m_wallType = wallType;

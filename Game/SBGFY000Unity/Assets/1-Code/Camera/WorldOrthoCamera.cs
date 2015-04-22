@@ -157,6 +157,10 @@ public class WorldOrthoCamera : MonoBehaviour
                     GroundManager.Singleton.SetHighlightTiles(m_startClickPos, m_endClickPos, selectType);
                 }
             }
+            else if (m_doDisplayObject)
+            {
+                GroundManager.Singleton.Client_AttemptPlaceObject();
+            }
         }
 
         if (m_doDisplayDrag)

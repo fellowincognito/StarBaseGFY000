@@ -37,6 +37,47 @@ public class DoorObject : BaseGroundObject
 
     }
 
+    public override void SetMaterial(Material mat)
+    {
+        DoorFrameArt.renderer.material = mat;
+        DoorOpenArt.renderer.material = mat;
+        DoorCloseArt.renderer.material = mat;
+
+        base.SetMaterial(mat);
+    }
+
+    public override void SetMaterialColor(Color color)
+    {
+        base.SetMaterialColor(color);
+
+        DoorFrameArt.renderer.material.SetColor("_Color", color);
+        DoorOpenArt.renderer.material.SetColor("_Color", color);
+        DoorCloseArt.renderer.material.SetColor("_Color", color);
+    }
+
+    public override void AssignToPosition(Vec2Int position, float rot, bool asHologram)
+    {
+        base.AssignToPosition(position, rot, asHologram);
+
+        if (asHologram)
+        {
+            SetMaterial(PrefabAssets.Singleton.doorHologramMat);
+            ToggleCollider(false);
+        }
+        else
+        {
+            SetMaterial(PrefabAssets.Singleton.doorMatGray);
+            ToggleCollider(true);
+        }
+    }
+
+    public override void BuildObject()
+    {
+        SetMaterial(PrefabAssets.Singleton.doorMatGray);
+
+        theCollider.enabled = true;
+    }
+
     public void OpenDoor()
     {
         if (_doorState == DoorState.Locked)

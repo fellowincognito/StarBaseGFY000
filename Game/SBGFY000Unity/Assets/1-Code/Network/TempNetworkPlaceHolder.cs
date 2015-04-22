@@ -50,6 +50,11 @@ public class TempNetworkPlaceHolder : MonoBehaviour
         //For now, reroute to Ground Manager directly
         GroundManager.Singleton.Server_ReceiveAssembleTile(tileIndex);
     }
+
+    public void Client_SendObjectPlacement(GroundManager.GroundTileType tileType)
+    {
+
+    }
     #endregion
 
     #region Server

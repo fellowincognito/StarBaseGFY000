@@ -213,6 +213,7 @@ public class CacheManager : MonoBehaviour
     public void ReturnInteriorDoor(DoorObject door)
     {
         door.SetTilePos(new Vec2Int(-1, -1));
+        door.SetMaterial(PrefabAssets.Singleton.doorHologramMat);
         door.gameObject.transform.parent = this.transform;
         door.gameObject.SetActive(false);
 
